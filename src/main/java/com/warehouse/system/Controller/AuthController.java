@@ -11,13 +11,17 @@ import com.warehouse.system.DTO.TokenPair;
 import com.warehouse.system.Enums.AuthAction;
 import com.warehouse.system.Model.RefreshTokenModel;
 import com.warehouse.system.Service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
 import java.util.Map;
 
 @RestController
@@ -43,8 +47,18 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(service.login(request));
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
+        LoginResponse loginResponse = service.login(request);
+        ResponseCookie cookie = ResponseCookie.from("accessToken",loginResponse.getToken().getAccessToken())
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .path("/")
+                .maxAge(Duration.ofHours(1))
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        return ResponseEntity.ok(loginResponse);
     }
 
     @GetMapping("/me")
@@ -53,7 +67,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenModel refreshTokenRequest) {
+    public ResponseEntity<?> refreshToken(@CookieValue("refreshToken") String refreshTokenRequest) {
         TokenPair token = service.refreshToken(refreshTokenRequest);
         return ResponseEntity.ok(token);
     }

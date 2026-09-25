@@ -45,12 +45,14 @@ public class UserService {
 
     @Transactional
     public UserResponse register (RegisterRequest registerRequest){
-        UserModel user = UserModel.builder()
-                .userType(registerRequest.getUserType())
-                .contactNumber(registerRequest.getContactNumber())
-                .password(passwordEncoder.encode(registerRequest.getPassword()))
-                .isRegistered(true)
-                .build();
+        UserModel user = userModelRepository.findByEmail(registerRequest.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("No verified account found for this email"));
+
+        user.setUserType(registerRequest.getUserType());
+        user.setContactNumber(registerRequest.getContactNumber());
+        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+        user.setRegistered(true);
+
         userModelRepository.save(user);
         otpRepository.deleteAllByEmail(registerRequest.getEmail());
         return new UserResponse(true, "Registration complete", AuthAction.ONBOARD);
@@ -114,24 +116,26 @@ public class UserService {
     }
 
 
-    public TokenPair refreshToken(RefreshTokenModel refreshTokenRequest) {
-        String refreshToken = refreshTokenRequest.getToken();
-        String username = jwtService.extractUserName(refreshToken);
+    public TokenPair refreshToken(String refreshTokenRequest) {
+        String username = jwtService.extractUserName(refreshTokenRequest);
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
         if(userDetails == null){
             throw new IllegalArgumentException("User not found");
         }
+
+        if (!jwtService.isRefreshToken(refreshTokenRequest)) {
+            throw new IllegalArgumentException("Provided token is not a refresh token");
+        }
+
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                 userDetails,
                 null,
                 userDetails.getAuthorities()
         );
-        if (!jwtService.isRefreshToken(refreshTokenRequest.getToken())) {
-            throw new IllegalArgumentException("Provided token is not a refresh token");
-        }
+
         String accessToken = jwtService.generateAccessToken(authentication);
-        return new TokenPair(accessToken,refreshToken);
+        return new TokenPair(accessToken,refreshTokenRequest);
     }
 
     private LoginResponse buildAuthResponse(UserModel user, String message) {
