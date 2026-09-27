@@ -42,32 +42,32 @@ public class UserService {
 
     @Transactional
     public UserResponse register (RegisterRequest registerRequest){
-        UserModel user = userModelRepository.findByEmail(registerRequest.getEmail())
+        UserModel user = userModelRepository.findByEmail(registerRequest.email())
                 .orElseThrow(() -> new IllegalArgumentException("No verified account found for this email"));
 
-        user.setUserType(registerRequest.getUserType());
-        user.setContactNumber(registerRequest.getContactNumber());
-        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+        user.setUserType(registerRequest.userType());
+        user.setContactNumber(registerRequest.contactNumber());
+        user.setPassword(passwordEncoder.encode(registerRequest.password()));
         user.setRegistered(true);
 
         userModelRepository.save(user);
-        otpRepository.deleteAllByEmail(registerRequest.getEmail());
+        otpRepository.deleteAllByEmail(registerRequest.email());
         return new UserResponse(true, "Registration complete", AuthAction.ONBOARD);
     }
 
     @Transactional
     public UserResponse sendOtp(SendOtpRequest request) {
-        if (userModelRepository.existsByEmail(request.getEmail())) {
-            emailService.sendAccountExist(request.getEmail());
+        if (userModelRepository.existsByEmail(request.email())) {
+            emailService.sendAccountExist(request.email());
         }else{
-            otpService.generateAndSendOtp(request.getEmail(), request.getName());
+            otpService.generateAndSendOtp(request.email(), request.name());
         }
-        return new UserResponse(true, "OTP sent to " + request.getEmail() + ". Please verify to continue.",AuthAction.OTP_SENT);
+        return new UserResponse(true, "OTP sent to " + request.email() + ". Please verify to continue.",AuthAction.OTP_SENT);
     }
 
     @Transactional
     public UserResponse verifyOtpAndLogin(VerifyOtpRequest request) {
-        OtpModel otp = otpService.verifyOtp(request.getOtp());
+        OtpModel otp = otpService.verifyOtp(request.otp());
         userModelRepository.findByEmail(otp.getEmail())
                 .orElseGet(() -> userModelRepository.save(UserModel.builder()
                         .email(otp.getEmail())
@@ -79,14 +79,14 @@ public class UserService {
     }
 
     public LoginResponse login(LoginRequest request) {
-        UserModel user = userModelRepository.findByEmail(request.getEmail())
+        UserModel user = userModelRepository.findByEmail(request.email())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
 
         if (user.getPassword() == null) {
             throw new IllegalArgumentException("No password set for this account. Please set a password first.");
         }
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new IllegalArgumentException("Invalid email or password");
         }
 

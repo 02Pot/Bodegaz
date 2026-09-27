@@ -34,9 +34,13 @@ public class WarehouseService {
         Slice<Warehouse> slice = warehouseRepository.findByWarehouseIdGreaterThanOrderByWarehouseIdAsc(lastId,pageable);
 
         UUID nextCursor = slice.hasContent()
-                ? slice.getContent().getLast().getWarehouseId()
-                : null;
+                ? slice.getContent().getLast().getWarehouseId() : null;
+
         return new ScrollResponse<>(slice.getContent(),nextCursor,slice.hasNext());
+    }
+
+    public WarehouseResponse getById(UUID id) {
+        return WarehouseResponse.from(warehouseRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Warehouse not found: " + id)));
     }
 
     @Transactional
@@ -49,8 +53,8 @@ public class WarehouseService {
         applyAddress(address, request);
 
         Warehouse warehouse = new Warehouse();
-        warehouse.setName(request.getName());
-        warehouse.setWarehouseCapacityKg(request.getWarehouseCapacityKg());
+        warehouse.setName(request.name());
+        warehouse.setWarehouseCapacityKg(request.warehouseCapacityKg());
         warehouse.setUser(user);
         warehouse.setWarehouseAddress(address);
         address.setWarehouse(warehouse);
@@ -63,27 +67,28 @@ public class WarehouseService {
     public WarehouseResponse updateWarehouse(WarehouseRequest request, UUID id){
          userModelRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        Warehouse warehouse = warehouseRepository.findById(request.getId())
+        Warehouse warehouse = warehouseRepository.findById(request.id())
                 .orElseThrow(() -> new EntityNotFoundException("Warehouse not found: " + id));
 
-        warehouse.setName(request.getName());
-        warehouse.setWarehouseCapacityKg(request.getWarehouseCapacityKg());
+        warehouse.setName(request.name());
+        warehouse.setWarehouseCapacityKg(request.warehouseCapacityKg());
         applyAddress(warehouse.getWarehouseAddress(), request);
 
         return WarehouseResponse.from(warehouseRepository.save(warehouse));
     }
 
-    public WarehouseResponse getById(UUID id) {
-        return WarehouseResponse.from(warehouseRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Warehouse not found: " + id)));
+    public void delete(UUID id) {
+        if (!warehouseRepository.existsById(id)) throw new EntityNotFoundException("Warehouse not found: " + id);
+        warehouseRepository.deleteById(id);
     }
 
     private void applyAddress(WarehouseAddress address, WarehouseRequest request) {
-        address.setAddressLine1(request.getAddressLine1());
-        address.setAddressLine2(request.getAddressLine2());
-        address.setCity(request.getCity());
-        address.setStateProvince(request.getStateProvince());
-        address.setCountry(request.getCountry());
-        address.setPostalCode(request.getPostalCode());
+        address.setAddressLine1(request.addressLine1());
+        address.setAddressLine2(request.addressLine2());
+        address.setCity(request.city());
+        address.setStateProvince(request.stateProvince());
+        address.setCountry(request.country());
+        address.setPostalCode(request.postalCode());
     }
 
 }
