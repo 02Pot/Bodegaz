@@ -1,18 +1,19 @@
 package com.warehouse.system.DTO.Response;
 
 import com.warehouse.system.Enums.AuthAction;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.warehouse.system.Model.UserModel;
 
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class UserResponse {
+public record UserResponse(
+         boolean success,
+         String message,
+         AuthAction action
+) {
+    public static UserResponse success(String message, AuthAction action) {
+        return new UserResponse(true, message, action);
+    }
 
-    private boolean success;
-    private String message;
-    private AuthAction action;
+    public static UserResponse failure(String message) {
+        return new UserResponse(false, message, null);
+    }
+
 }
