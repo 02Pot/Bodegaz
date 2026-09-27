@@ -11,15 +11,13 @@ import com.warehouse.system.DTO.TokenPair;
 import com.warehouse.system.Enums.AuthAction;
 import com.warehouse.system.Exception.UnauthorizedException;
 import com.warehouse.system.Model.OtpModel;
-import com.warehouse.system.Model.RefreshTokenModel;
 import com.warehouse.system.Model.UserModel;
 import com.warehouse.system.Repository.OtpRepository;
 import com.warehouse.system.Repository.UserModelRepository;
 import com.warehouse.system.Service.otp.EmailService;
 import com.warehouse.system.Service.otp.OtpService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -29,7 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -105,14 +102,7 @@ public class UserService {
             throw new UnauthorizedException("Not authenticated");
         }
 
-        return AuthCheckResponse.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .name(user.getName())
-                .userType(user.getUserType() != null ? user.getUserType().name() : null)
-                .isVerified(user.isVerified())
-                .isRegistered(user.isRegistered())
-                .build();
+        return AuthCheckResponse.from(user);
     }
 
 
@@ -146,14 +136,8 @@ public class UserService {
 
         TokenPair tokenPair = jwtService.generateTokenPair(authentication);
 
-        return LoginResponse.builder()
-                .token(tokenPair)
-                .id(user.getId())
-                .email(user.getEmail())
-                .userType(user.getUserType() != null ? user.getUserType() : null)
-                .name(user.getName())
-                .message(message)
-                .build();
+        return LoginResponse.from(user, tokenPair, message);
+
     }
 
 

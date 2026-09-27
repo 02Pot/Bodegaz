@@ -49,7 +49,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
         LoginResponse loginResponse = service.login(request);
-        ResponseCookie cookie = ResponseCookie.from("accessToken",loginResponse.getToken().getAccessToken())
+        ResponseCookie cookie = ResponseCookie.from("accessToken",loginResponse.tokenPair().getAccessToken())
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("None")

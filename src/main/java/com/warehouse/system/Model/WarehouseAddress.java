@@ -17,20 +17,23 @@ public class WarehouseAddress {
     @Column(name = "address_id",updatable = false,nullable = false)
     private UUID addressId;
 
-    @Column(name = "address_block",nullable = false)
-    private String addressBlock;
+    @Column(name = "address_line1",nullable = false)
+    private String addressLine1;
+
+    @Column(name = "address_line2",nullable = false)
+    private String addressLine2;
 
     @Column(name = "city",nullable = false)
     private String city;
 
-    @Column(name = "barangay",nullable = false)
-    private String barangay;
+    @Column(name = "state_province",nullable = false)
+    private String stateProvince;
 
     @Column(name = "country",nullable = false)
     private String country;
 
-    @Column(name = "zipcode",nullable = false)
-    private int zipcode;
+    @Column(name = "postalCode",nullable = false)
+    private String postalCode;
 
     @OneToOne(mappedBy = "warehouseAddress",cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Warehouse warehouse;
