@@ -23,18 +23,18 @@ public class Storage {
     @Column(name = "block_name", nullable = false)
     private String blockName;
 
-    @Column(name = "section", nullable = false)
+    @Column(name = "section")
     private String section;
 
-    @Column(name = "max_add_weight")
-    private double maxAddWeight;
+    @Column(name = "max_weight",nullable = false)
+    private double maxWeight;
+
+    @Column(name = "is_available")
+    private boolean isAvailable;
 
     @Column(name = "material_type", nullable = false)
     @Enumerated(EnumType.STRING)
     private MaterialType materialType;
-
-    @Column(name = "available_area",nullable = false)
-    private String availableArea;
 
     @Column(name = "seller_id",nullable = false)
     private UUID sellerId;

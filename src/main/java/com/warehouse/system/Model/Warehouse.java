@@ -3,7 +3,9 @@ package com.warehouse.system.Model;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +26,12 @@ public class Warehouse {
 
     @Column(name = "warehouse_capacity",nullable = false)
     private double warehouseCapacityKg;
+
+    private long viewCount = 0;
+
+    @CreationTimestamp
+    @Column(updatable = false)
+    private Instant createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
