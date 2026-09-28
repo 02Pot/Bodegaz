@@ -7,6 +7,7 @@ public record StorageRequest(
         String blockName,
         String section,
         double maxWeight,
+        boolean isAvalaible,
         MaterialType materialType,
         StorageType storageType,
         double lengthMeters,

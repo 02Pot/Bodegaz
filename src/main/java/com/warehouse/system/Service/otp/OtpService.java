@@ -74,7 +74,6 @@ public class OtpService {
         return token;
     }
 
-
     @Scheduled(fixedRate = 600_000)
     public void cleanExpiredOtps() {
         otpTokenRepository.deleteExpiredTokens(LocalDateTime.now());

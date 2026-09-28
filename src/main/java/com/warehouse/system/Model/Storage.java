@@ -4,7 +4,6 @@ import com.warehouse.system.Enums.MaterialType;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;

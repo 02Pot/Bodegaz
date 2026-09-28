@@ -16,10 +16,9 @@ public interface StorageRepository extends JpaRepository<Storage, UUID> {
     Optional<Storage> findBySection(String name);
 
     @Query("""
-        SELECT u FROM Storage u 
-        WHERE u.warehouse.warehouseId = :warehouseId 
-        AND u.isAvailable = true 
-        AND u.capacityKg >= :requiredCapacity
+        SELECT s FROM Storage s
+        WHERE s.warehouse.warehouseId = :warehouseId
+        AND s.isAvailable = true
     """)
     Page<Storage> findAvailableUnitsInWarehouse(
             @Param("warehouseId") UUID warehouseId,

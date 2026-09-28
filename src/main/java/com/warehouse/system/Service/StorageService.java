@@ -7,6 +7,7 @@ import com.warehouse.system.Model.StorageType;
 import com.warehouse.system.Model.UserModel;
 import com.warehouse.system.Model.Warehouse;
 import com.warehouse.system.Repository.StorageRepository;
+import com.warehouse.system.Repository.StorageTypeRepository;
 import com.warehouse.system.Repository.UserModelRepository;
 import com.warehouse.system.Repository.WarehouseRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -17,7 +18,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.UUID;
 
 @Service
@@ -28,6 +28,7 @@ public class StorageService {
     private final WarehouseRepository warehouseRepository;
     private final StorageRepository storageRepository;
     private final UserModelRepository userModelRepository;
+    private final StorageTypeRepository storageTypeRepository;
 
     @Transactional
     @PreAuthorize("hasAuthority('SELLER_ROLE')")
@@ -36,24 +37,22 @@ public class StorageService {
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         Warehouse warehouse = warehouseRepository.findById(warehouseId)
-                .orElseThrow(() -> new EntityNotFoundException("Warehouse doesnt exist"));
+                .orElseThrow(() -> new EntityNotFoundException("Warehouse doesn't exist"));
 
         StorageType storageInfo = new StorageType();
-
-        Storage storage = new Storage();
-
-        storage.setBlockName(request.blockName());
-        storage.setSection(request.section());
-        storage.setMaxWeight(request.maxWeight());
-
-        storage.setWarehouse(warehouse);
-        storage.setSellerId(user.getId());
-
         storageInfo.setLengthMeters(request.lengthMeters());
         storageInfo.setBreadthMeters(request.breadthMeters());
         storageInfo.setHeightMeters(request.heightMeters());
         storageInfo.setCapacityWeight(request.capacityWeight());
         storageInfo.setUnitsAvailable(request.unitsAvailable());
+
+        Storage storage = new Storage();
+        storage.setBlockName(request.blockName());
+        storage.setSection(request.section());
+        storage.setMaxWeight(request.maxWeight());
+        storage.setMaterialType(request.materialType());
+        storage.setWarehouse(warehouse);
+        storage.setSellerId(user.getId());
 
         storage.setStorageType(storageInfo);
 
@@ -77,7 +76,42 @@ public class StorageService {
                 warehouseId,
                 userId
         ));
-
     }
+
+    // Update Storage
+    public StorageResponse updateStorage(UUID storageId,UUID userId,StorageRequest storageRequest){
+        userModelRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
+        Storage storage =  storageRepository.findById(storageId).orElseThrow(() -> new EntityNotFoundException("Storage not found"));
+
+        storage.setBlockName(storageRequest.blockName());
+        storage.setSection(storageRequest.section());
+        storage.setMaxWeight(storageRequest.maxWeight());
+        storage.setAvailable(storageRequest.isAvalaible());
+        storage.setMaterialType(storageRequest.materialType());
+
+        StorageType storageType = storage.getStorageType();
+        if (storageType != null) {
+            storageType.setLengthMeters(storageRequest.lengthMeters());
+            storageType.setBreadthMeters(storageRequest.breadthMeters());
+            storageType.setHeightMeters(storageRequest.heightMeters());
+            storageType.setCapacityWeight(storageRequest.capacityWeight());
+            storageType.setUnitsAvailable(storageRequest.unitsAvailable());
+            storageRepository.save(storage);
+        }
+
+        return StorageResponse.from(storageRepository.save(storage));
+    }
+
+    // Remove Storage
+    public Void deleteStorage(UUID userId,UUID storageId){
+        userModelRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
+        if (!storageRepository.existsById(storageId)) throw new EntityNotFoundException("Storage not found: " + storageId);
+        warehouseRepository.deleteById(storageId);
+        return null;
+    }
+
+    // Lease Storage Method
+
+
 
 }

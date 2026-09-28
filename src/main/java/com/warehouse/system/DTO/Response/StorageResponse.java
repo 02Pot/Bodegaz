@@ -21,7 +21,7 @@ public record StorageResponse(
                 s.getBlockName(),
                 s.getSection(),
                 s.getMaxWeight(),
-                s.getAvailable(),
+                s.isAvailable(),
                 s.getMaterialType(),
                 s.getWarehouse().getWarehouseId(),
                 s.getSellerId()

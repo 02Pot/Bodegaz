@@ -19,13 +19,13 @@ public interface WarehouseRepository extends JpaRepository<Warehouse, UUID> {
     Optional<Warehouse> findByUser_Id(UUID userId);
     Slice<Warehouse> findByWarehouseIdGreaterThanOrderByWarehouseIdAsc(UUID id, Pageable pageable);
     @Query("""
-      select i from warehouse i
+      select i from Warehouse i
       where i.createdAt > :since
         order by i.viewCount desc, i.createdAt desc
     """)
     Page<Warehouse> findTrending(@Param("since") Instant since, Pageable pageable);
     @Query("""
-      select i from warehouse i
+      select i from Warehouse i
       order by i.createdAt desc
     """)
     Page<Warehouse> findNewest(Pageable pageable);
