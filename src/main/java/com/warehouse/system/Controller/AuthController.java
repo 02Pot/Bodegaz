@@ -9,20 +9,17 @@ import com.warehouse.system.DTO.Response.LoginResponse;
 import com.warehouse.system.DTO.Response.UserResponse;
 import com.warehouse.system.DTO.TokenPair;
 import com.warehouse.system.Enums.AuthAction;
-import com.warehouse.system.Model.RefreshTokenModel;
-import com.warehouse.system.Service.UserService;
+import com.warehouse.system.Service.Auth.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")

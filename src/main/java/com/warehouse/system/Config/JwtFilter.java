@@ -1,8 +1,8 @@
 package com.warehouse.system.Config;
 
 
-import com.warehouse.system.Service.JwtFilterService;
-import com.warehouse.system.Service.UserDetailsService;
+import com.warehouse.system.Service.Auth.JwtFilterService;
+import com.warehouse.system.Service.Auth.UserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;

@@ -1,0 +1,11 @@
+package com.warehouse.system.Repository;
+
+import com.warehouse.system.Model.LeaseAgreement;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+public interface LeaseAgreementRepository extends JpaRepository<LeaseAgreement, UUID> {
+    Optional<LeaseAgreement> findByAgreementNumber(String number);
+}

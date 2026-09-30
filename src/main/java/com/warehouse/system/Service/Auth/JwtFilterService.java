@@ -1,4 +1,4 @@
-package com.warehouse.system.Service;
+package com.warehouse.system.Service.Auth;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
@@ -7,7 +7,6 @@ import javax.crypto.SecretKey;
 
 import com.warehouse.system.DTO.TokenPair;
 import com.warehouse.system.Model.RefreshTokenModel;
-import com.warehouse.system.Model.UserModel;
 import com.warehouse.system.Repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;

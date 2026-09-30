@@ -1,4 +1,4 @@
-package com.warehouse.system.Service;
+package com.warehouse.system.Service.Auth;
 
 import com.warehouse.system.Model.UserModel;
 import com.warehouse.system.Repository.UserModelRepository;

@@ -1,4 +1,4 @@
-package com.warehouse.system.Service;
+package com.warehouse.system.Service.Warehouse;
 
 import com.warehouse.system.DTO.Request.StorageRequest;
 import com.warehouse.system.DTO.Response.StorageResponse;

@@ -1,6 +1,6 @@
 package com.warehouse.system.Model;
 
-import com.warehouse.system.Enums.Status;
+import com.warehouse.system.Enums.BookingStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -21,20 +21,27 @@ public class StorageBooking {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID orderId;
 
+    @Column(name = "unit_number")
+    private String unitNumber;
+
     @Column(name = "start_date")
     private LocalDateTime startDate;
 
     @Column(name = "end_date")
     private LocalDateTime endDate;
 
-    @Column(name = "total_price")
-    private float totalPrice;
-
     @Column(name = "status")
-    private Status status;
+    @Enumerated(EnumType.STRING)
+    private BookingStatus status;
 
-    @Column(name = "invoice_link")
-    private String invoiceLink;
+    @Column(name = "hold_expires_at")
+    private LocalDateTime holdExpiresAt;
+
+    @Version
+    private Long version;
+
+    @OneToOne(mappedBy = "storageBooking",cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private LeaseAgreement leaseAgreement;
 
     @ManyToOne
     @JoinColumn(name = "user_id",nullable = false)

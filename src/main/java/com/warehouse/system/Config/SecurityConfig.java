@@ -2,7 +2,6 @@ package com.warehouse.system.Config;
 
 import java.util.Arrays;
 
-import com.warehouse.system.Service.JwtFilterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;

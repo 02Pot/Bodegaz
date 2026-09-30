@@ -1,4 +1,4 @@
-package com.warehouse.system.Service;
+package com.warehouse.system.Service.Warehouse;
 
 import com.warehouse.system.DTO.Request.WarehouseRequest;
 import com.warehouse.system.DTO.Response.ScrollResponse;
@@ -10,10 +10,7 @@ import com.warehouse.system.Repository.UserModelRepository;
 import com.warehouse.system.Repository.WarehouseRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +28,7 @@ public class WarehouseService {
 
     public ScrollResponse<Warehouse> getAllWarehouse(UUID cursor, int size) {
         UUID lastId = cursor != null ? cursor : new UUID(0L,0L);
-        Pageable pageable = PageRequest.of(0,size);
+        Pageable pageable = PageRequest.of(0, size, Sort.by("warehouseId").ascending());
         Slice<Warehouse> slice = warehouseRepository.findByWarehouseIdGreaterThanOrderByWarehouseIdAsc(lastId,pageable);
 
         UUID nextCursor = slice.hasContent()
@@ -119,9 +116,10 @@ public class WarehouseService {
 
     @Transactional
     @PreAuthorize("hasAuthority('SELLER_ROLE')")
-    public Void delete(UUID id) {
-        if (!warehouseRepository.existsById(id)) throw new EntityNotFoundException("Warehouse not found: " + id);
-        warehouseRepository.deleteById(id);
+    public Void delete(UUID userId,UUID warehouseId) {
+        userModelRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
+        if (!warehouseRepository.existsById(warehouseId)) throw new EntityNotFoundException("Warehouse not found: " + warehouseId);
+        warehouseRepository.deleteById(warehouseId);
         return null;
     }
 
