@@ -12,10 +12,13 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -26,7 +29,7 @@ public class WarehouseService {
     private final WarehouseRepository warehouseRepository;
     private final UserModelRepository userModelRepository;
 
-    public ScrollResponse<Warehouse> getAllWarehouse(UUID cursor, int size) {
+    public ScrollResponse<WarehouseResponse> getAllWarehouse(UUID cursor, int size) {
         UUID lastId = cursor != null ? cursor : new UUID(0L,0L);
         Pageable pageable = PageRequest.of(0, size, Sort.by("warehouseId").ascending());
         Slice<Warehouse> slice = warehouseRepository.findByWarehouseIdGreaterThanOrderByWarehouseIdAsc(lastId,pageable);
@@ -34,7 +37,12 @@ public class WarehouseService {
         UUID nextCursor = slice.hasContent()
                 ? slice.getContent().getLast().getWarehouseId() : null;
 
-        return new ScrollResponse<>(slice.getContent(),nextCursor,slice.hasNext());
+        List<WarehouseResponse> warehouses = slice.getContent()
+                .stream()
+                .map(WarehouseResponse::from)
+                .toList();
+
+        return new ScrollResponse<>(warehouses, nextCursor, slice.hasNext());
     }
 
     @PreAuthorize("hasAuthority('SELLER_ROLE')")
@@ -43,7 +51,6 @@ public class WarehouseService {
     }
 
     @Transactional
-    @PreAuthorize("hasAuthority('SELLER_ROLE')")
     public Page<WarehouseResponse> getByTrending(UUID id, int size) {
         UserModel user = userModelRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
@@ -62,7 +69,6 @@ public class WarehouseService {
     }
 
     @Transactional
-    @PreAuthorize("hasAuthority('SELLER_ROLE')")
     public Page<WarehouseResponse> getByNewest(UUID id,int size){
         UserModel user = userModelRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));

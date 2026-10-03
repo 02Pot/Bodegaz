@@ -1,19 +1,12 @@
 package com.warehouse.system.Service.Invoice;
 
 import com.warehouse.system.DTO.Request.InvoiceRequest;
-import com.warehouse.system.DTO.Request.WarehouseRequest;
 import com.warehouse.system.DTO.Response.InvoiceResponse;
 import com.warehouse.system.DTO.Response.ScrollResponse;
-import com.warehouse.system.DTO.Response.WarehouseResponse;
 import com.warehouse.system.Enums.InvoiceStatus;
 import com.warehouse.system.Model.Invoice;
-import com.warehouse.system.Model.UserModel;
-import com.warehouse.system.Model.Warehouse;
-import com.warehouse.system.Model.WarehouseAddress;
 import com.warehouse.system.Repository.InvoiceRepository;
 import com.warehouse.system.Repository.LeaseAgreementRepository;
-import com.warehouse.system.Repository.UserModelRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
@@ -50,14 +43,17 @@ public class InvoiceService {
 
     @Transactional
     public InvoiceResponse create(InvoiceRequest req) {
-        if (invoiceRepository.existsByLeaseAgreementId(req.leaseId())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Invoice number already exists");
-        }
+        leaseAgreementRepository.findById(req.leaseId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Lease not found"));
+
+        validateExist(req);
         validateDates(req);
+
         Invoice invoice = new Invoice();
         invoice.setInvoiceStatus(InvoiceStatus.DRAFT);
-        invoice.setTotalAmount(req.totalAmount());
+
         apply(invoice, req);
+
         return InvoiceResponse.from(invoiceRepository.save(invoice));
     }
 
@@ -72,9 +68,6 @@ public class InvoiceService {
     @Transactional
     public InvoiceResponse update(UUID id, InvoiceRequest req) {
         Invoice invoice = find(id);
-        if (invoiceRepository.existsByLeaseAgreementIdAndInvoiceIdNot(req.leaseId(), id)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Invoice already exists");
-        }
         if(invoice.getInvoiceStatus() != InvoiceStatus.DRAFT){
             throw new ResponseStatusException(HttpStatus.METHOD_NOT_ALLOWED);
         }
@@ -91,6 +84,12 @@ public class InvoiceService {
 
     private Invoice find(UUID id) {
         return invoiceRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found: " + id));
+    }
+
+    private void validateExist(InvoiceRequest req){
+        if(invoiceRepository.existsByLeaseAgreement_LeaseId(req.leaseId())){
+            throw new ResponseStatusException(HttpStatus.CONFLICT,"Invoice already exist");
+        }
     }
 
     private void validateDates(InvoiceRequest req) {
@@ -112,6 +111,7 @@ public class InvoiceService {
         invoice.setInvoiceNumber("INV-" + UUID.randomUUID());
         invoice.setIssueDate(req.issueDate());
         invoice.setDueDate(req.dueDate());
+        invoice.setTotalAmount(req.totalAmount());
     }
 
 }

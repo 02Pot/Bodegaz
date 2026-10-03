@@ -17,4 +17,5 @@ public record WarehouseResponse(
                 w.getWarehouseAddress().getAddressId());
     }
 
+
 }

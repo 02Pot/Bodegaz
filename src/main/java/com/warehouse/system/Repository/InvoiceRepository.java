@@ -13,8 +13,6 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
     Optional<Invoice> findByInvoiceNumber(String number);
     Slice<Invoice> findByInvoiceIdGreaterThanOrderByInvoiceIdAsc(UUID id, Pageable pageable);
     boolean existsByInvoiceNumber(String invoiceNumber);
-    boolean existsByLeaseAgreementId(UUID id);
-    boolean existsByInvoiceNumberAndInvoiceIdNot(String invoiceNumber, UUID invoiceId);
-    boolean existsByLeaseAgreementIdAndInvoiceIdNot(UUID leaseId, UUID invoiceId);
+    boolean existsByLeaseAgreement_LeaseId(UUID leaseId);
     Page<Invoice> findByInvoiceStatus(InvoiceStatus status, Pageable pageable);
 }
