@@ -5,7 +5,6 @@ import com.warehouse.system.DTO.Response.BookingResponse;
 import com.warehouse.system.DTO.Response.ScrollResponse;
 import com.warehouse.system.DTO.Response.WarehouseResponse;
 import com.warehouse.system.Model.StorageBooking;
-import com.warehouse.system.Model.UserModel;
 import com.warehouse.system.Model.Warehouse;
 import com.warehouse.system.Service.Warehouse.WarehouseService;
 import jakarta.validation.Valid;
@@ -19,8 +18,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@RestController
-@RequestMapping("/api/warehouse")
+@RestController("/api/warehouse")
 @RequiredArgsConstructor
 public class WarehouseController {
 
@@ -28,7 +26,7 @@ public class WarehouseController {
     private final Clock clock;
 
     @GetMapping("/all")
-    public ResponseEntity<ScrollResponse<WarehouseResponse>> getAll(
+    public ResponseEntity<ScrollResponse<Warehouse>> getAll(
             @RequestParam(required = false)UUID cursor,
             @RequestParam(defaultValue = "10") int size
     ){
@@ -82,9 +80,12 @@ public class WarehouseController {
         return ResponseEntity.ok(warehouseService.getByNewest(currentUserId(auth),size));
     }
 
+    private BookingResponse toResponse(StorageBooking b) {
+        return BookingResponse.from(b, LocalDateTime.now(clock));
+    }
+
     private UUID currentUserId(Authentication auth) {
-        UserModel user = (UserModel) auth.getPrincipal();
-        return user.getId();
+        return UUID.fromString(auth.getName());
     }
 
 }
