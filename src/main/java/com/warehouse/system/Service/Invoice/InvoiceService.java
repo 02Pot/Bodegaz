@@ -1,19 +1,12 @@
 package com.warehouse.system.Service.Invoice;
 
 import com.warehouse.system.DTO.Request.InvoiceRequest;
-import com.warehouse.system.DTO.Request.WarehouseRequest;
 import com.warehouse.system.DTO.Response.InvoiceResponse;
 import com.warehouse.system.DTO.Response.ScrollResponse;
-import com.warehouse.system.DTO.Response.WarehouseResponse;
 import com.warehouse.system.Enums.InvoiceStatus;
 import com.warehouse.system.Model.Invoice;
-import com.warehouse.system.Model.UserModel;
-import com.warehouse.system.Model.Warehouse;
-import com.warehouse.system.Model.WarehouseAddress;
 import com.warehouse.system.Repository.InvoiceRepository;
 import com.warehouse.system.Repository.LeaseAgreementRepository;
-import com.warehouse.system.Repository.UserModelRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
@@ -50,7 +43,7 @@ public class InvoiceService {
 
     @Transactional
     public InvoiceResponse create(InvoiceRequest req) {
-        if (invoiceRepository.existsByLeaseAgreementId(req.leaseId())) {
+        if (invoiceRepository.existsByLeaseAgreementLeaseId(req.leaseId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Invoice number already exists");
         }
         validateDates(req);
@@ -72,7 +65,7 @@ public class InvoiceService {
     @Transactional
     public InvoiceResponse update(UUID id, InvoiceRequest req) {
         Invoice invoice = find(id);
-        if (invoiceRepository.existsByLeaseAgreementIdAndInvoiceIdNot(req.leaseId(), id)) {
+        if (invoiceRepository.existsByLeaseAgreementLeaseIdAndInvoiceIdNot(req.leaseId(), id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Invoice already exists");
         }
         if(invoice.getInvoiceStatus() != InvoiceStatus.DRAFT){

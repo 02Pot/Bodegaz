@@ -26,6 +26,9 @@ public class RefreshTokenModel {
     @Column(name = "expireDate",nullable = false)
     private Instant expireDate;
 
+    @Column(name = "revoked", nullable = false)
+    private boolean revoked;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id",referencedColumnName = "id")
     private UserModel user;

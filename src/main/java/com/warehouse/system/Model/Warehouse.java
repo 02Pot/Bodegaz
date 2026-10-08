@@ -27,7 +27,7 @@ public class Warehouse {
     @Column(name = "warehouse_capacity",nullable = false)
     private double warehouseCapacityKg;
 
-    private long viewCount = 0;
+    private Long viewCount;
 
     @CreationTimestamp
     @Column(updatable = false)
@@ -37,11 +37,13 @@ public class Warehouse {
     @JoinColumn(name = "user_id", nullable = false)
     private UserModel user;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "warehouse_address_id",nullable = false,unique = true)
     private WarehouseAddress warehouseAddress;
 
     @OneToMany(mappedBy = "warehouse",cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Storage> storage = new ArrayList<>();
+
+
 
 }

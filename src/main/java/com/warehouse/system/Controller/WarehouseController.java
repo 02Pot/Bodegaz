@@ -5,8 +5,10 @@ import com.warehouse.system.DTO.Response.BookingResponse;
 import com.warehouse.system.DTO.Response.ScrollResponse;
 import com.warehouse.system.DTO.Response.WarehouseResponse;
 import com.warehouse.system.Model.StorageBooking;
+import com.warehouse.system.Model.UserModel;
 import com.warehouse.system.Model.Warehouse;
 import com.warehouse.system.Service.Warehouse.WarehouseService;
+import com.warehouse.system.Utils.GetCurrentUserId;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,19 +20,22 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@RestController("/api/warehouse")
+@RestController
+@RequestMapping("/api/warehouse")
 @RequiredArgsConstructor
 public class WarehouseController {
 
     private final WarehouseService warehouseService;
     private final Clock clock;
+    private final GetCurrentUserId getCurrentUserId;
 
     @GetMapping("/all")
-    public ResponseEntity<ScrollResponse<Warehouse>> getAll(
+    public ResponseEntity<ScrollResponse<WarehouseResponse>> getAll(
             @RequestParam(required = false)UUID cursor,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            Authentication auth
     ){
-        return ResponseEntity.ok(warehouseService.getAllWarehouse(cursor,size));
+        return ResponseEntity.ok(warehouseService.getAllWarehouse(cursor,size,getCurrentUserId.currentUserId(auth)));
     }
 
     @GetMapping("/{id}")
@@ -45,15 +50,16 @@ public class WarehouseController {
             @Valid @RequestBody WarehouseRequest request,
             Authentication auth
     ){
-        return ResponseEntity.ok(warehouseService.addWarehouse(request,currentUserId(auth)));
+        return ResponseEntity.ok(warehouseService.addWarehouse(request,getCurrentUserId.currentUserId(auth)));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<WarehouseResponse> updateWarehouse(
+            @PathVariable UUID warehouseId,
             @Valid @RequestBody WarehouseRequest request,
             Authentication auth
     ){
-        return ResponseEntity.ok(warehouseService.updateWarehouse(request,currentUserId(auth)));
+        return ResponseEntity.ok(warehouseService.updateWarehouse(warehouseId,request,getCurrentUserId.currentUserId(auth)));
     }
 
     @DeleteMapping("/{id}")
@@ -61,7 +67,7 @@ public class WarehouseController {
             Authentication auth,
             @PathVariable UUID id
     ){
-        return ResponseEntity.ok(warehouseService.delete(currentUserId(auth),id));
+        return ResponseEntity.ok(warehouseService.delete(getCurrentUserId.currentUserId(auth),id));
     }
 
     @GetMapping("/trending")
@@ -69,7 +75,7 @@ public class WarehouseController {
             Authentication auth,
             @RequestParam int size
     ){
-        return ResponseEntity.ok(warehouseService.getByTrending(currentUserId(auth),size));
+        return ResponseEntity.ok(warehouseService.getByTrending(getCurrentUserId.currentUserId(auth),size));
     }
 
     @GetMapping("/newest")
@@ -77,15 +83,11 @@ public class WarehouseController {
             Authentication auth,
             @RequestParam int size
     ){
-        return ResponseEntity.ok(warehouseService.getByNewest(currentUserId(auth),size));
+        return ResponseEntity.ok(warehouseService.getByNewest(getCurrentUserId.currentUserId(auth),size));
     }
 
     private BookingResponse toResponse(StorageBooking b) {
         return BookingResponse.from(b, LocalDateTime.now(clock));
-    }
-
-    private UUID currentUserId(Authentication auth) {
-        return UUID.fromString(auth.getName());
     }
 
 }

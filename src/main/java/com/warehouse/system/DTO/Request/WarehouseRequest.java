@@ -2,20 +2,21 @@ package com.warehouse.system.DTO.Request;
 
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 import java.util.UUID;
 
 public record WarehouseRequest(
-        @NotBlank(message = "Id is required")
-        UUID id,
 
         @NotBlank(message = "Name is required")
         String name,
 
-        @NotBlank(message = "Capacity is required")
-        double warehouseCapacityKg,
+        @NotNull(message = "Capacity is required")
+        @Positive(message = "Capacity must be greater than 0")
+        Double warehouseCapacityKg,
 
-        long viewCount,
+        Long viewCount,
 
         @NotBlank(message = "Address1 is required")
         String addressLine1,

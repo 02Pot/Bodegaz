@@ -35,7 +35,7 @@ public class WarehouseAddress {
     @Column(name = "postalCode",nullable = false)
     private String postalCode;
 
-    @OneToOne(mappedBy = "warehouseAddress",cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "warehouseAddress", fetch = FetchType.LAZY)
     private Warehouse warehouse;
 
 }
