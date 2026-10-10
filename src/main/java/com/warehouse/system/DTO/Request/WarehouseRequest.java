@@ -35,4 +35,6 @@ public record WarehouseRequest(
 
         @NotBlank(message = "Postal Code is required")
         String postalCode
+
+
 ) { }

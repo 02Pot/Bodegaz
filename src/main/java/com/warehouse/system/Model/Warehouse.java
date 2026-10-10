@@ -2,7 +2,9 @@ package com.warehouse.system.Model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
@@ -11,7 +13,8 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Data
+@Setter
+@Getter
 @Table(name = "warehouse")
 @RequiredArgsConstructor
 public class Warehouse {
@@ -44,6 +47,7 @@ public class Warehouse {
     @OneToMany(mappedBy = "warehouse",cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Storage> storage = new ArrayList<>();
 
-
+    @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<WarehouseImage> images = new ArrayList<>();
 
 }

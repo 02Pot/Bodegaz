@@ -1,8 +1,10 @@
 package com.warehouse.system.Enums;
 
 public enum LeaseStatus {
+    DRAFT,
+    REVIEWING,
+    AWAITING_SIGNATURE,
     ACTIVE,
-    SCHEDULED,
     EXPIRED,
     TERMINATED,
     COLLECTIONS,

@@ -59,7 +59,7 @@ public class AuthController {
                 .secure(true)
                 .sameSite("None")
                 .path("/")
-                .maxAge(Duration.ofMinutes(15))
+                .maxAge(service.getAccessTtl())
                 .build();
 
         ResponseCookie refresh = ResponseCookie.from("refreshToken",authResult.tokenPair().getRefreshToken())
@@ -67,10 +67,9 @@ public class AuthController {
                 .secure(true)
                 .sameSite("None")
                 .path("/api/auth/refresh-token")
-                .maxAge(Duration.ofDays(1))
+                .maxAge(service.getRefreshTtl())
                 .build();
-        System.out.println(authResult.tokenPair().getAccessToken());
-        System.out.println(authResult.tokenPair().getRefreshToken());
+
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, access.toString())
                 .header(HttpHeaders.SET_COOKIE, refresh.toString())
@@ -100,11 +99,11 @@ public class AuthController {
 
         ResponseCookie access = ResponseCookie.from("accessToken", pair.getAccessToken())
                 .httpOnly(true).secure(true).sameSite("None")
-                .path("/").maxAge(Duration.ofMinutes(15)).build();
+                .path("/").maxAge(service.getAccessTtl()).build();
 
         ResponseCookie refresh = ResponseCookie.from("refreshToken", pair.getRefreshToken())
                 .httpOnly(true).secure(true).sameSite("None")
-                .path("/api/auth/refresh-token").maxAge(Duration.ofDays(7)).build();
+                .path("/api/auth/refresh-token").maxAge(service.getRefreshTtl()).build();
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, access.toString())
@@ -119,16 +118,25 @@ public class AuthController {
 
         service.logout(refreshToken, allDevices);
 
-        ResponseCookie clear = ResponseCookie.from("refreshToken", "")
+        ResponseCookie refresh = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
                 .secure(true)
-                .sameSite("Strict")
+                .sameSite("None")
                 .path("/api/auth/refresh-token")
                 .maxAge(0)
                 .build();
 
+        ResponseCookie access = ResponseCookie.from("accessToken","")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .path("/")
+                .maxAge(0)
+                .build();
+
         return ResponseEntity.noContent()
-                .header(HttpHeaders.SET_COOKIE, clear.toString())
+                .header(HttpHeaders.SET_COOKIE, refresh.toString())
+                .header(HttpHeaders.SET_COOKIE, access.toString())
                 .build();
     }
 

@@ -23,6 +23,7 @@ import com.warehouse.system.Service.otp.EmailService;
 import com.warehouse.system.Service.otp.OtpService;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -38,6 +39,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HexFormat;
+import java.util.Optional;
 
 
 @Service
@@ -52,11 +54,19 @@ public class UserService {
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
+    @Value("${app.jwt.refresh-expiration}")
+    private long refreshExpiration;
+    @Value("${app.jwt.expiration}")
+    private long jwtExpiration;
 
     @Transactional
     public UserResponse register (RegisterRequest registerRequest){
         UserModel user = userModelRepository.findByEmail(registerRequest.email())
                 .orElseThrow(InvalidCredentials::new);
+
+        if(!user.isVerified() || user.isRegistered()){
+            throw new InvalidCredentials();
+        }
 
         user.setUserType(registerRequest.userType());
         user.setContactNumber(registerRequest.contactNumber());
@@ -70,9 +80,9 @@ public class UserService {
 
     @Transactional
     public UserResponse sendOtp(SendOtpRequest request) {
-//        UserModel user = userModelRepository.findByEmail(request.email()).orElseThrow(() -> new RuntimeException("No account found"));
+        Optional<UserModel> existing = userModelRepository.findByEmail(request.email());
 
-        if (userModelRepository.existsByEmail(request.email()) ) {
+        if (existing.isPresent() && existing.get().isRegistered()) {
             emailService.sendAccountExist(request.email());
         }else{
             otpService.generateAndSendOtp(request.email(), request.name());
@@ -90,7 +100,7 @@ public class UserService {
                         .isVerified(true)
                         .isRegistered(false)
                         .build()));
-        return new UserResponse(true, "Verified Success",AuthAction.ONBOARDING);
+        return new UserResponse(true, "Verified Success",AuthAction.ONBOARD);
     }
 
     public AuthResult login(LoginRequest request) {
@@ -118,7 +128,6 @@ public class UserService {
         });
     }
 
-    @GetMapping("/me")
     public AuthCheckResponse getCurrentUser(Authentication authentication) {
         if (authentication == null
                 || !authentication.isAuthenticated()
@@ -129,6 +138,7 @@ public class UserService {
             .orElseThrow(() -> new UnauthorizedException("Not authenticated"));
         return AuthCheckResponse.from(user);
     }
+
 
 
     @Transactional(noRollbackFor = RefreshTokenReuseException.class)
@@ -163,13 +173,15 @@ public class UserService {
         String newRefreshToken = jwtService.generateRefreshToken(authentication);
         refreshTokenRepository.save(RefreshTokenModel.builder()
                 .token(hash(newRefreshToken))
-                .expireDate(Instant.now().plus(Duration.ofDays(7)))
+                .expireDate(Instant.now().plus(getRefreshTtl()))
                 .revoked(false)
                 .user(stored.getUser())
                 .build());
 
         return new TokenPair(newAccessToken, newRefreshToken);
     }
+
+
 
     private AuthResult buildAuthResponse(UserModel user, String message) {
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
@@ -178,7 +190,12 @@ public class UserService {
         );
 
         TokenPair tokenPair = jwtService.generateTokenPair(authentication);
-
+        refreshTokenRepository.save(RefreshTokenModel.builder()
+                .token(hash(tokenPair.getRefreshToken()))
+                .expireDate(Instant.now().plus(getRefreshTtl()))
+                .revoked(false)
+                .user(user)
+                .build());
         return new AuthResult(LoginResponse.from(user,message),tokenPair);
 
     }
@@ -191,6 +208,14 @@ public class UserService {
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    public Duration getRefreshTtl() {
+        return Duration.ofMillis(refreshExpiration);
+    }
+
+    public Duration getAccessTtl() {
+        return Duration.ofMillis(jwtExpiration);
     }
 
 }

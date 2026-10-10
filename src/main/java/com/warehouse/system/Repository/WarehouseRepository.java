@@ -10,14 +10,31 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 
 public interface WarehouseRepository extends JpaRepository<Warehouse, UUID> {
-    Optional<Warehouse> findByName(String warehouseName);
-    Optional<Warehouse> findByUser_Id(UUID userId);
     Slice<Warehouse> findByWarehouseIdGreaterThanOrderByWarehouseIdAsc(UUID id, Pageable pageable);
+
+    @Query("""
+    select w
+    from Warehouse w
+    where w.warehouseId > :cursor
+      and not exists (
+        select 1
+        from SavedWarehouses sw
+        where sw.warehouse = w
+          and sw.user.id = :userId
+      )
+    order by w.warehouseId asc
+    """)
+    Slice<Warehouse> findUnsavedFeed(
+            @Param("cursor") UUID cursor,
+            @Param("userId") UUID userId,
+            Pageable pageable);
     @Query("""
       select i from Warehouse i
       where i.createdAt > :since

@@ -26,6 +26,9 @@ public class UserModel implements UserDetails {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(name = "profile_picture")
+    private String profilePicture;
+
     @Column(name = "name")
     private String name;
 

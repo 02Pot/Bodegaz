@@ -20,5 +20,4 @@ public record LoginResponse(
         );
     }
 
-
 }
