@@ -19,6 +19,7 @@ import com.warehouse.system.Model.UserModel;
 import com.warehouse.system.Repository.OtpRepository;
 import com.warehouse.system.Repository.RefreshTokenRepository;
 import com.warehouse.system.Repository.UserModelRepository;
+import com.warehouse.system.Service.File.FileStorageService;
 import com.warehouse.system.Service.otp.EmailService;
 import com.warehouse.system.Service.otp.OtpService;
 import lombok.RequiredArgsConstructor;
@@ -31,8 +32,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -53,6 +57,7 @@ public class UserService {
     private final OtpService otpService;
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
+    private final FileStorageService fileStorageService;
     private final RefreshTokenRepository refreshTokenRepository;
     @Value("${app.jwt.refresh-expiration}")
     private long refreshExpiration;
@@ -60,7 +65,7 @@ public class UserService {
     private long jwtExpiration;
 
     @Transactional
-    public UserResponse register (RegisterRequest registerRequest){
+    public UserResponse register(RegisterRequest registerRequest, MultipartFile file) throws IOException {
         UserModel user = userModelRepository.findByEmail(registerRequest.email())
                 .orElseThrow(InvalidCredentials::new);
 
@@ -68,11 +73,17 @@ public class UserService {
             throw new InvalidCredentials();
         }
 
+        String storedName = null;
+        if (file != null && !file.isEmpty()) {
+            storedName = fileStorageService.store(file).storedName();
+            registerCleanupOnRollback(storedName);
+        }
+
         user.setUserType(registerRequest.userType());
         user.setContactNumber(registerRequest.contactNumber());
         user.setPassword(passwordEncoder.encode(registerRequest.password()));
         user.setRegistered(true);
-
+        user.setProfilePicture(storedName);
         userModelRepository.save(user);
         otpRepository.deleteAllByEmail(registerRequest.email());
         return new UserResponse(true, "Registration complete", AuthAction.ONBOARD);
@@ -216,6 +227,21 @@ public class UserService {
 
     public Duration getAccessTtl() {
         return Duration.ofMillis(jwtExpiration);
+    }
+
+    private void registerCleanupOnRollback(String storedName) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                if (status != STATUS_COMMITTED) {
+                    try {
+                        fileStorageService.delete(storedName);
+                    } catch (IOException e) {
+                        System.out.println("Could not clean up orphaned upload {} " + storedName + " " +  e);
+                    }
+                }
+            }
+        });
     }
 
 }

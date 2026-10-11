@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.UUID;
 
 public interface StorageTypeRepository extends JpaRepository<StorageType, UUID> {
+    boolean existsByName(String name);
+
 }

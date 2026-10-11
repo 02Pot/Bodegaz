@@ -2,16 +2,17 @@ package com.warehouse.system.Model;
 
 import com.warehouse.system.Enums.MaterialType;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Data
+@Setter
+@Getter
 @Table(name = "storage")
-@RequiredArgsConstructor
+@NoArgsConstructor
 public class Storage {
 
     @Id
@@ -34,9 +35,6 @@ public class Storage {
     @Column(name = "material_type", nullable = false)
     @Enumerated(EnumType.STRING)
     private MaterialType materialType;
-
-    @Column(name = "seller_id",nullable = false)
-    private UUID sellerId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "warehouse_id",nullable = false)

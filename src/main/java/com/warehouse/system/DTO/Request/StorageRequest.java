@@ -2,18 +2,16 @@ package com.warehouse.system.DTO.Request;
 
 import com.warehouse.system.Enums.MaterialType;
 import com.warehouse.system.Model.StorageType;
+import jakarta.validation.constraints.*;
+
+import java.util.UUID;
 
 public record StorageRequest(
-        String blockName,
+        @NotBlank String blockName,
         String section,
-        double maxWeight,
-        boolean isAvalaible,
-        MaterialType materialType,
-        StorageType storageType,
-        double lengthMeters,
-        double breadthMeters,
-        double heightMeters,
-        double capacityWeight,
-        double unitsAvailable
+        @Positive Double maxWeight,
+        @NotNull MaterialType materialType,
+        @NotNull UUID storageTypeId,
+        @Min(1) @Max(100) Integer quantity
 ) {
 }

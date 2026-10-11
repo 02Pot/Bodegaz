@@ -15,9 +15,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -32,86 +36,59 @@ public class StorageService {
 
     @Transactional
     @PreAuthorize("hasAuthority('SELLER_ROLE')")
-    public StorageResponse addStorage(StorageRequest request, UUID userId,UUID warehouseId){
-        UserModel user = userModelRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
-
+    public List<StorageResponse> addStorage(StorageRequest request, UUID userId,UUID warehouseId){
         Warehouse warehouse = warehouseRepository.findById(warehouseId)
                 .orElseThrow(() -> new EntityNotFoundException("Warehouse doesn't exist"));
 
-        StorageType storageInfo = new StorageType();
-        storageInfo.setLengthMeters(request.lengthMeters());
-        storageInfo.setBreadthMeters(request.breadthMeters());
-        storageInfo.setHeightMeters(request.heightMeters());
-        storageInfo.setCapacityWeight(request.capacityWeight());
-        storageInfo.setUnitsAvailable(request.unitsAvailable());
-
-        Storage storage = new Storage();
-        storage.setBlockName(request.blockName());
-        storage.setSection(request.section());
-        storage.setMaxWeight(request.maxWeight());
-        storage.setMaterialType(request.materialType());
-        storage.setWarehouse(warehouse);
-        storage.setSellerId(user.getId());
-
-        storage.setStorageType(storageInfo);
-
-        return StorageResponse.from(storageRepository.save(storage));
-    }
-
-    public Page<StorageResponse> getAvailableWarehouseStorage(UUID warehouseId, UUID userId, int page, int size){
-        userModelRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
-
-        Pageable pageable = PageRequest.of(page,size);
-        Page<Storage> storages = storageRepository.findAvailableUnitsInWarehouse(
-                warehouseId, pageable
-        );
-
-        return storages.map(storage -> new StorageResponse(
-                storage.getBlockName(),
-                storage.getSection(),
-                storage.getMaxWeight(),
-                storage.isAvailable(),
-                storage.getMaterialType(),
-                warehouseId,
-                userId
-        ));
-    }
-
-    // Update Storage
-    public StorageResponse updateStorage(UUID storageId,UUID userId,StorageRequest storageRequest){
-        userModelRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
-        Storage storage =  storageRepository.findById(storageId).orElseThrow(() -> new EntityNotFoundException("Storage not found"));
-
-        storage.setBlockName(storageRequest.blockName());
-        storage.setSection(storageRequest.section());
-        storage.setMaxWeight(storageRequest.maxWeight());
-        storage.setAvailable(storageRequest.isAvalaible());
-        storage.setMaterialType(storageRequest.materialType());
-
-        StorageType storageType = storage.getStorageType();
-        if (storageType != null) {
-            storageType.setLengthMeters(storageRequest.lengthMeters());
-            storageType.setBreadthMeters(storageRequest.breadthMeters());
-            storageType.setHeightMeters(storageRequest.heightMeters());
-            storageType.setCapacityWeight(storageRequest.capacityWeight());
-            storageType.setUnitsAvailable(storageRequest.unitsAvailable());
-            storageRepository.save(storage);
+        if (!warehouse.getUser().getId().equals(userId)) {
+            throw new AccessDeniedException("You don't own this warehouse");
         }
 
-        return StorageResponse.from(storageRepository.save(storage));
+        StorageType type = storageTypeRepository.findById(request.storageTypeId())
+                .orElseThrow(() -> new EntityNotFoundException("Storage type not found"));
+
+        double maxWeight = request.maxWeight() != null ? request.maxWeight() : type.getCapacityWeight();
+        if (maxWeight > type.getCapacityWeight()) {
+            throw new IllegalArgumentException("maxWeight exceeds the storage type's capacity");
+        }
+
+        int qty = request.quantity() != null ? request.quantity() : 1;
+
+        List<Storage> created = new ArrayList<>();
+        for (int i = 1; i <= qty; i++) {
+            Storage s = new Storage();
+            s.setBlockName(qty == 1 ? request.blockName() : request.blockName() + "-" + i);
+            s.setSection(request.section());
+            s.setMaxWeight(maxWeight);
+            s.setMaterialType(request.materialType());
+            s.setStorageType(type);
+            warehouse.addStorage(s);
+            created.add(s);
+        }
+
+        storageRepository.saveAll(created);
+
+        return created.stream().map(StorageResponse::from).toList();
     }
 
-    // Remove Storage
-    public Void deleteStorage(UUID userId,UUID storageId){
-        userModelRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
-        if (!storageRepository.existsById(storageId)) throw new EntityNotFoundException("Storage not found: " + storageId);
-        warehouseRepository.deleteById(storageId);
-        return null;
+    @Transactional(readOnly = true)
+    public List<StorageResponse> getStorages(UUID warehouseId) {
+        return storageRepository.findByWarehouse_WarehouseId(warehouseId)
+                .stream().map(StorageResponse::from).toList();
     }
 
-    // Lease Storage Method
+    @Transactional
+    @PreAuthorize("hasAuthority('SELLER_ROLE')")
+    public void deleteStorage(UUID warehouseId, UUID storageId, UUID currentUserId) {
+        Storage storage = storageRepository.findById(storageId)
+                .orElseThrow(() -> new EntityNotFoundException("Storage not found"));
 
+        if (!storage.getWarehouse().getWarehouseId().equals(warehouseId)
+                || !storage.getWarehouse().getUser().getId().equals(currentUserId)) {
+            throw new AccessDeniedException("Not allowed");
+        }
+        storageRepository.delete(storage);
+    }
 
 
 }

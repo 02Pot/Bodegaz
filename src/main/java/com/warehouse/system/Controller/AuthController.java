@@ -16,15 +16,14 @@ import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
 
@@ -40,9 +39,11 @@ public class AuthController {
         return ResponseEntity.ok(service.sendOtp(request));
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(service.register(request));
+    @PostMapping(value = "/register",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<UserResponse> register(
+            @Valid  @ModelAttribute RegisterRequest request,
+            @RequestParam(value = "file", required = false) MultipartFile file) throws IOException {
+        return ResponseEntity.ok(service.register(request,file));
     }
 
     @PostMapping("/otp/verify")

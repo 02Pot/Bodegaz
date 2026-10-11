@@ -18,17 +18,12 @@ import java.util.UUID;
 public interface StorageRepository extends JpaRepository<Storage, UUID> {
     Optional<Storage> findByBlockName(String name);
     Optional<Storage> findBySection(String name);
-    boolean existsByIsAvailableTrue();
+    List<Storage> findByWarehouse_WarehouseId(UUID warehouseId);
 
-    @Query("""
-        SELECT s FROM Storage s
-        WHERE s.warehouse.warehouseId = :warehouseId
-        AND s.isAvailable = true
-    """)
-    Page<Storage> findAvailableUnitsInWarehouse(
-            @Param("warehouseId") UUID warehouseId,
-            Pageable pageable
-    );
+    @Query("select coalesce(sum(s.maxWeight), 0) from Storage s where s.warehouse.warehouseId = :id")
+    double sumMaxWeightByWarehouseId(@Param("id") UUID id);
+
+    boolean existsByIsAvailableTrue();
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000"))

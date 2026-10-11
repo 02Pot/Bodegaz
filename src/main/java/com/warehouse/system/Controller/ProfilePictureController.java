@@ -26,18 +26,17 @@ public class ProfilePictureController {
     private final ProfilePictureService profilePictureService;
     private final GetCurrentUserId getCurrentUserId;
 
-    @PostMapping(value = "/me/profile-picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/upload/profile-picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, String>> upload(
             @RequestParam("file") MultipartFile file,
             Authentication auth) throws IOException {
 
         profilePictureService.upload(getCurrentUserId.currentUserId(auth), file);
-        return ResponseEntity.ok(Map.of("url", "/api/users/me/profile-picture"));
+        return ResponseEntity.ok(Map.of("url", "/api/users/upload/profile-picture"));
     }
 
     @GetMapping("/me/profile-picture")
-    public ResponseEntity<Resource> getMine(Authentication auth)
-            throws IOException {
+    public ResponseEntity<Resource> getPicture(Authentication auth) throws IOException {
         return serve(profilePictureService.get(getCurrentUserId.currentUserId(auth)));
     }
 
@@ -55,7 +54,7 @@ public class ProfilePictureController {
     private ResponseEntity<Resource> serve(ProfilePicture picture) {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(picture.contentType()))
-                .cacheControl(CacheControl.maxAge(Duration.ofMinutes(10)).cachePrivate())
+                .cacheControl(CacheControl.maxAge(Duration.ofMinutes(10)).cachePublic())
                 .header("X-Content-Type-Options", "nosniff")
                 .body(picture.resource());
     }

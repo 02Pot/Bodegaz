@@ -50,4 +50,14 @@ public class Warehouse {
     @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WarehouseImage> images = new ArrayList<>();
 
+    public void addStorage(Storage s) {
+        storage.add(s);
+        s.setWarehouse(this);
+    }
+
+    public void removeStorage(Storage s) {
+        storage.remove(s);
+        s.setWarehouse(null);
+    }
+
 }
