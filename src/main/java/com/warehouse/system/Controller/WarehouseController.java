@@ -1,8 +1,10 @@
 package com.warehouse.system.Controller;
 
 import com.warehouse.system.DTO.Request.WarehouseRequest;
+import com.warehouse.system.DTO.Request.WarehouseUpdateRequest;
 import com.warehouse.system.DTO.Response.BookingResponse;
 import com.warehouse.system.DTO.Response.ScrollResponse;
+import com.warehouse.system.DTO.Response.SellerWarehouseResponse;
 import com.warehouse.system.DTO.Response.WarehouseResponse;
 import com.warehouse.system.Model.StorageBooking;
 import com.warehouse.system.Model.WarehouseImage;
@@ -45,11 +47,17 @@ public class WarehouseController {
         return ResponseEntity.ok(warehouseService.getAllWarehouse(cursor,size,getCurrentUserId.currentUserId(auth)));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{warehouseId}")
     public ResponseEntity<WarehouseResponse> getById(
-            @PathVariable UUID id
+            @PathVariable UUID warehouseId,
+            Authentication auth
     ){
-        return ResponseEntity.ok(warehouseService.getById(id));
+        return ResponseEntity.ok(warehouseService.getByWarehouseId(getCurrentUserId.currentUserId(auth),warehouseId));
+    }
+
+    @GetMapping("/my-rental")
+    public ResponseEntity<List<SellerWarehouseResponse>> getMyWarehouse(Authentication authentication){
+        return ResponseEntity.ok(warehouseService.getMyWarehouse(getCurrentUserId.currentUserId(authentication)));
     }
 
     @PostMapping(value = "/add",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -61,11 +69,11 @@ public class WarehouseController {
         return ResponseEntity.ok(warehouseService.addWarehouse(request,images,getCurrentUserId.currentUserId(auth)));
     }
 
-    @PutMapping(value = "/{warehouseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PatchMapping(value = "/{warehouseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<WarehouseResponse> updateWarehouse(
             @PathVariable UUID warehouseId,
-            @RequestPart("data") @Valid WarehouseRequest request,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images,
+            @RequestPart(value = "data",required = false) WarehouseUpdateRequest request,
+            @RequestPart(value = "files", required = false) List<MultipartFile> images,
             @RequestParam(value = "removeImageIds", required = false) List<UUID> removeImageIds,
             Authentication auth
     ) throws IOException {

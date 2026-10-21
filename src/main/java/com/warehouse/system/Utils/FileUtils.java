@@ -1,5 +1,6 @@
 package com.warehouse.system.Utils;
 
+import com.warehouse.system.DTO.Response.WarehouseImageResponse;
 import com.warehouse.system.DTO.StoredUpload;
 import com.warehouse.system.Model.Warehouse;
 import com.warehouse.system.Model.WarehouseImage;
@@ -18,6 +19,7 @@ import java.util.List;
 public class FileUtils {
 
     private final FileStorageService storageService;
+    private static final String IMAGE_PATH = "/api/warehouse/images/";
 
     public List<StoredUpload> storeFiles(List<MultipartFile> files) throws IOException {
         if (files == null || files.isEmpty()) return List.of();
@@ -51,7 +53,13 @@ public class FileUtils {
 
     public List<String> toUrls(List<WarehouseImage> images) {
         return images.stream()
-                .map(img -> "/api/warehouse/images/" + img.getId())   // note the trailing slash
+                .map(img -> IMAGE_PATH + img.getId())
+                .toList();
+    }
+
+    public List<WarehouseImageResponse> toImageResponses(List<WarehouseImage> images){
+        return images.stream()
+                .map(img -> new WarehouseImageResponse(img.getId(), IMAGE_PATH + img.getId()))
                 .toList();
     }
 

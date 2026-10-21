@@ -21,7 +21,6 @@ public record WarehouseRequest(
         @NotBlank(message = "Address1 is required")
         String addressLine1,
 
-        @NotBlank(message = "Address2 is required")
         String addressLine2,
 
         @NotBlank(message = "City is required")

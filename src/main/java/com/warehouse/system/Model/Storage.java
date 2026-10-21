@@ -4,6 +4,7 @@ import com.warehouse.system.Enums.MaterialType;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -31,6 +32,12 @@ public class Storage {
 
     @Column(name = "is_available")
     private boolean isAvailable;
+
+    @Column(name = "price")
+    private BigDecimal pricePerCubicMeter;
+
+    @Column(name = "max_volume", nullable = false)
+    private double maxVolumeCubicMeter;
 
     @Column(name = "material_type", nullable = false)
     @Enumerated(EnumType.STRING)

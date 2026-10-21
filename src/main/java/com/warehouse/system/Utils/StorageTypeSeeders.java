@@ -35,4 +35,6 @@ public class StorageTypeSeeders implements ApplicationRunner {
         repo.save(t);
     }
 
+    //cubic meter = length x breadth x height
+    //volume is capacityweight
 }

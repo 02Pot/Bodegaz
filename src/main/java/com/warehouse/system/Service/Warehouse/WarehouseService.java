@@ -1,19 +1,23 @@
 package com.warehouse.system.Service.Warehouse;
 
+import com.warehouse.system.DTO.Interface.BookedStats;
+import com.warehouse.system.DTO.Interface.StorageStats;
 import com.warehouse.system.DTO.Request.WarehouseRequest;
+import com.warehouse.system.DTO.Request.WarehouseUpdateRequest;
 import com.warehouse.system.DTO.Response.AddressResponse;
 import com.warehouse.system.DTO.Response.ScrollResponse;
+import com.warehouse.system.DTO.Response.SellerWarehouseResponse;
 import com.warehouse.system.DTO.Response.WarehouseResponse;
 import com.warehouse.system.DTO.StoredUpload;
+import com.warehouse.system.Enums.BookingStatus;
 import com.warehouse.system.Exception.InvalidCredentials;
 import com.warehouse.system.Model.*;
-import com.warehouse.system.Repository.UserModelRepository;
-import com.warehouse.system.Repository.WarehouseImageRepository;
-import com.warehouse.system.Repository.WarehouseRepository;
+import com.warehouse.system.Repository.*;
 import com.warehouse.system.Service.File.FileStorageService;
 import com.warehouse.system.Utils.FileUtils;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.security.access.AccessDeniedException;
@@ -30,11 +34,14 @@ import java.io.UncheckedIOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class WarehouseService {
 
     private final WarehouseRepository warehouseRepository;
@@ -42,6 +49,9 @@ public class WarehouseService {
     private final WarehouseImageRepository warehouseImageRepository;
     private final FileStorageService storageService;
     private final FileUtils fileUtils;
+    private final SavedWarehouseRepository savedWarehouseRepository;
+    private final StorageBookingRepository bookingRepository;
+    private final StorageRepository storageRepository;
     @Value("${app.upload.dir}")
     private String imageBaseUrl;
 
@@ -72,9 +82,61 @@ public class WarehouseService {
         return new ScrollResponse<>(items, nextCursor, slice.hasNext());
     }
 
+    public WarehouseResponse getByWarehouseId(UUID userId,UUID id) {
+        Warehouse warehouse = warehouseRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Warehouse not found: " + id));
+
+        List<String> imagesByWarehouse = warehouseImageRepository
+                .findByWarehouse_WarehouseId(id)
+                .stream()
+                .map(img -> "/api/warehouse/images/" + img.getId())
+                .toList();
+
+        boolean saved = savedWarehouseRepository
+                .existsByUser_IdAndWarehouse_WarehouseId(userId, id);
+
+        return WarehouseResponse.from(warehouse, saved, imagesByWarehouse);
+    }
+
     @PreAuthorize("hasAuthority('SELLER_ROLE')")
-    public WarehouseResponse getById(UUID id) {
-        return WarehouseResponse.from(warehouseRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Warehouse not found: " + id)));
+    public List<SellerWarehouseResponse> getMyWarehouse(UUID userId){
+        List<Warehouse> warehouses = warehouseRepository.findByOwnerWithAddress(userId);
+        if (warehouses.isEmpty()) return List.of();
+
+        List<UUID> ids = warehouses.stream().map(Warehouse::getWarehouseId).toList();
+
+        Map<UUID, StorageStats> stats = storageRepository.statsByOwner(userId).stream()
+                .collect(Collectors.toMap(StorageStats::getWarehouseId, Function.identity()));
+
+        Map<UUID, Long> booked = bookingRepository
+                .bookedByOwner(userId, List.of(BookingStatus.HELD, BookingStatus.CONFIRMED)).stream()
+                .collect(Collectors.toMap(BookedStats::getWarehouseId, BookedStats::getBookedCount));
+
+        Map<UUID, List<WarehouseImage>> imagesByWarehouse = warehouseImageRepository
+                .findByWarehouse_WarehouseIdInOrderByUploadedAtAsc(ids)
+                .stream()
+                .collect(Collectors.groupingBy(img -> img.getWarehouse().getWarehouseId()));
+
+        return warehouses.stream().map(w -> {
+            UUID id = w.getWarehouseId();
+            StorageStats st = stats.get(id);
+            long storageCount = st == null ? 0L : st.getStorageCount();
+            double allocatedKg = st == null ? 0.0 : st.getAllocatedKg();
+
+            return new SellerWarehouseResponse(
+                    id,
+                    w.getName(),
+                    w.getWarehouseCapacityKg(),
+                    w.getViewCount() == null ? 0L : w.getViewCount(),
+                    w.getCreatedAt(),
+                    AddressResponse.from(w.getWarehouseAddress()),
+                    allocatedKg,
+                    storageCount,
+                    booked.getOrDefault(id, 0L),
+                    storageCount == 0,
+                    fileUtils.toImageResponses(imagesByWarehouse.getOrDefault(id, List.of()))
+            );
+        }).toList();
     }
 
     @Transactional
@@ -133,6 +195,7 @@ public class WarehouseService {
 
         Warehouse warehouse = new Warehouse();
         warehouse.setName(request.name());
+
         warehouse.setWarehouseCapacityKg(request.warehouseCapacityKg());
         warehouse.setUser(user);
         warehouse.setWarehouseAddress(address);
@@ -149,7 +212,7 @@ public class WarehouseService {
     @Transactional
     @PreAuthorize("hasAuthority('SELLER_ROLE')")
     public WarehouseResponse updateWarehouse(UUID warehouseId,
-                                             WarehouseRequest request,
+                                             WarehouseUpdateRequest request,
                                              List<MultipartFile> files,
                                              List<UUID> removeImageIds,
                                              UUID userId) throws IOException {
@@ -160,9 +223,11 @@ public class WarehouseService {
             throw new AccessDeniedException("You do not own this warehouse");
         }
 
-        warehouse.setName(request.name());
-        warehouse.setWarehouseCapacityKg(request.warehouseCapacityKg());
-        applyAddress(warehouse.getWarehouseAddress(), request);
+        if (request != null) {
+            applyIfPresent(request.name(), warehouse::setName);
+            applyIfPresent(request.warehouseCapacityKg(), warehouse::setWarehouseCapacityKg);
+            applyAddressPatch(warehouse.getWarehouseAddress(), request);
+        }
         Warehouse saved = warehouseRepository.save(warehouse);
 
         List<String> filesToDelete = new ArrayList<>();
@@ -173,19 +238,23 @@ public class WarehouseService {
             warehouseImageRepository.deleteAll(toRemove);
         }
 
-        saveImages(saved, files);
+        if (files != null && !files.isEmpty()) {
+            saveImages(saved, files);
+        }
 
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                fileUtils.deleteQuietly(filesToDelete);
-            }
-        });
+        if (!filesToDelete.isEmpty()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    fileUtils.deleteQuietly(filesToDelete);
+                }
+            });
+        }
 
         List<WarehouseImage> all = warehouseImageRepository
                 .findByWarehouse_WarehouseIdInOrderByUploadedAtAsc(List.of(warehouseId));
 
-        return WarehouseResponse.from(saved,false,fileUtils.toUrls(all));
+        return WarehouseResponse.from(saved, false, fileUtils.toUrls(all));
     }
 
     @Transactional
@@ -193,6 +262,7 @@ public class WarehouseService {
     public Void delete(UUID userId,UUID warehouseId) {
         userModelRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
         if (!warehouseRepository.existsById(warehouseId)) throw new EntityNotFoundException("Warehouse not found: " + warehouseId);
+        savedWarehouseRepository.deleteAllByWarehouse_WarehouseId(warehouseId);
         warehouseRepository.deleteById(warehouseId);
         return null;
     }
@@ -283,4 +353,21 @@ public class WarehouseService {
         }
     }
 
+
+    private <T> void applyIfPresent(T value, Consumer<T> setter) {
+        if (value != null) {
+            setter.accept(value);
+        }
+    }
+
+    private void applyAddressPatch(WarehouseAddress address, WarehouseUpdateRequest r) {
+        applyIfPresent(r.addressLine1(), address::setAddressLine1);
+        applyIfPresent(r.addressLine2(), address::setAddressLine2);
+        applyIfPresent(r.city(), address::setCity);
+        applyIfPresent(r.stateProvince(), address::setStateProvince);
+        applyIfPresent(r.country(), address::setCountry);
+        applyIfPresent(r.postalCode(), address::setPostalCode);
+    }
+
 }
+

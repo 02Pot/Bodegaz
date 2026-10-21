@@ -33,7 +33,7 @@ public record WarehouseResponse(
 
 
     public static WarehouseResponse from(Warehouse w){
-        return from(w);
+        return from(w,false,List.of());
     }
 
 }

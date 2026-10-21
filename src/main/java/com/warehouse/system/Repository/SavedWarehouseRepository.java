@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -26,5 +27,6 @@ public interface SavedWarehouseRepository extends JpaRepository<SavedWarehouses,
                                          @Param("lastId") UUID lastId,
                                          Pageable pageable);
     void deleteByUserIdAndWarehouse_WarehouseId(UUID userId, UUID warehouseId);
+    void deleteAllByWarehouse_WarehouseId(UUID warehouseId);
 
 }

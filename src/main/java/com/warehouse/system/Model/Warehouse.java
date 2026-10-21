@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
@@ -47,6 +48,7 @@ public class Warehouse {
     @OneToMany(mappedBy = "warehouse",cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Storage> storage = new ArrayList<>();
 
+    @BatchSize(size = 50)
     @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WarehouseImage> images = new ArrayList<>();
 

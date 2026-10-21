@@ -46,7 +46,7 @@ public class ProfilePictureService {
 
         String name = user.getProfilePicture();
         if (name == null || name.isBlank()) {
-            throw new FileNotFoundException("User has no profile picture");
+            return null;
         }
         return new ProfilePicture(fileStorageService.load(name), contentTypeFor(name));
     }

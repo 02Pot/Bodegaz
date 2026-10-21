@@ -52,6 +52,10 @@ public class ProfilePictureController {
     }
 
     private ResponseEntity<Resource> serve(ProfilePicture picture) {
+        if(picture == null){
+            return ResponseEntity.noContent().build();
+        }
+
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(picture.contentType()))
                 .cacheControl(CacheControl.maxAge(Duration.ofMinutes(10)).cachePublic())

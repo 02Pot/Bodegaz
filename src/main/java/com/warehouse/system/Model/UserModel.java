@@ -54,9 +54,6 @@ public class UserModel implements UserDetails {
     private List<Warehouse> warehouses = new ArrayList<>();
 
     @OneToMany(mappedBy = "user",cascade = CascadeType.ALL,orphanRemoval = true)
-    private List<Inventory> inventories = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user",cascade = CascadeType.ALL,orphanRemoval = true)
     private List<StorageBooking> storageBookings = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

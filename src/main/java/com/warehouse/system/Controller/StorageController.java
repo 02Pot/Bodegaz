@@ -1,6 +1,7 @@
 package com.warehouse.system.Controller;
 
 import com.warehouse.system.DTO.Request.StorageRequest;
+import com.warehouse.system.DTO.Request.StorageUpdateRequest;
 import com.warehouse.system.DTO.Response.StorageResponse;
 import com.warehouse.system.Service.Warehouse.StorageService;
 import com.warehouse.system.Utils.GetCurrentUserId;
@@ -42,6 +43,17 @@ public class StorageController {
                                        Authentication authentication) {
         storageService.deleteStorage(warehouseId, storageId, userIdService.currentUserId(authentication));
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{storageId}")
+    public ResponseEntity<StorageResponse> update(
+            @PathVariable UUID storageId,
+            @RequestBody @Valid StorageUpdateRequest request,
+            Authentication authentication
+    ){
+        return ResponseEntity.ok(storageService.updateStorage(
+                storageId,request,
+                userIdService.currentUserId(authentication)));
     }
 
 }

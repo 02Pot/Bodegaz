@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +38,15 @@ public class StorageBooking {
     @Column(name = "hold_expires_at")
     private LocalDateTime holdExpiresAt;
 
+    @Column(name = "rented_volume")
+    private double rentedVolumeCubicMeter;
+
+    @Column(name = "rented_weight")
+    private double rentedWeightKg;
+
+    @Column(name = "total_price")
+    private BigDecimal totalPrice;
+
     @Version
     private Long version;
 
@@ -50,9 +60,6 @@ public class StorageBooking {
     @ManyToOne
     @JoinColumn(name = "storage_id",nullable = false)
     private Storage storage;
-
-    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Inventory> inventories = new ArrayList<>();
 
 
 }
