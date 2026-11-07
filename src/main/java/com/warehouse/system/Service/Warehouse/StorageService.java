@@ -61,7 +61,7 @@ public class StorageService {
             s.setSection(request.section());
             s.setMaxWeight(maxWeight);
             s.setMaterialType(request.materialType());
-            s.setAvailable(true);
+            s.setListed(true);
             s.setPricePerCubicMeter(request.pricePerCubicMeter());
             s.setMaxVolumeCubicMeter(request.maxVolumeCubicMeter());
             s.setStorageType(type);

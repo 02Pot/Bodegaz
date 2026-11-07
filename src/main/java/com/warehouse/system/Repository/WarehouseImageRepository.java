@@ -12,13 +12,5 @@ import java.util.UUID;
 public interface WarehouseImageRepository extends JpaRepository<WarehouseImage, UUID> {
     List<WarehouseImage> findByWarehouse_WarehouseId(UUID warehouseId);
     List<WarehouseImage> findByWarehouse_WarehouseIdInOrderByUploadedAtAsc(Collection<UUID> warehouseIds);
-
-    @Query("""
-        select wi from WarehouseImage wi
-        where wi.warehouse.warehouseId in :warehouseIds
-        order by wi.uploadedAt asc, wi.id asc
-        """)
-    List<WarehouseImage> findAllByWarehouseIds(@Param("warehouseIds") Collection<UUID> warehouseIds);
-
     List<WarehouseImage> findByIdInAndWarehouse_WarehouseId(Collection<UUID> ids, UUID warehouseId);
 }

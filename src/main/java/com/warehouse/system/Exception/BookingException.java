@@ -17,7 +17,6 @@ public class BookingException extends RuntimeException {
   @ResponseStatus(HttpStatus.FORBIDDEN)
   public static class Forbidden extends BookingException { public Forbidden(String m) { super(m); } }
 
-  /** Unit already booked / held for an overlapping period */
   @ResponseStatus(HttpStatus.CONFLICT)
   public static class Conflict extends BookingException { public Conflict(String m) { super(m); } }
 
@@ -30,7 +29,6 @@ public class BookingException extends RuntimeException {
   @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
   public static class LimitExceeded extends BookingException { public LimitExceeded(String m) { super(m); } }
 
-  /** Couldn't get the lock in time – client may retry */
   @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
   public static class Busy extends BookingException { public Busy(String m) { super(m); } }
 }

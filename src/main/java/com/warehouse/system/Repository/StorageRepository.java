@@ -18,8 +18,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface StorageRepository extends JpaRepository<Storage, UUID> {
-    Optional<Storage> findByBlockName(String name);
-    Optional<Storage> findBySection(String name);
     List<Storage> findByWarehouse_WarehouseId(UUID warehouseId);
     @Query("""
         select s.warehouse.warehouseId as warehouseId,
@@ -30,8 +28,6 @@ public interface StorageRepository extends JpaRepository<Storage, UUID> {
         group by s.warehouse.warehouseId
     """)
     List<StorageStats> statsByOwner(@Param("userId") UUID userId);
-
-    boolean existsByIsAvailableTrue();
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000"))

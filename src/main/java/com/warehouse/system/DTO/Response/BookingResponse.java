@@ -9,8 +9,6 @@ import java.util.UUID;
 
 public record BookingResponse(
         UUID orderId,
-        UUID storageId,
-        String unitNumber,
         LocalDateTime startDate,
         LocalDateTime endDate,
         BookingStatus status,
@@ -24,12 +22,12 @@ public record BookingResponse(
         }
         return new BookingResponse(
                 b.getOrderId(),
-                b.getStorage().getStorageId(),
-                b.getUnitNumber(),
                 b.getStartDate(),
                 b.getEndDate(),
                 b.getStatus(),
                 b.getHoldExpiresAt(),
                 remaining);
     }
+
+    public record CapacityResponse(double availableVolume, double availableWeight) {}
 }

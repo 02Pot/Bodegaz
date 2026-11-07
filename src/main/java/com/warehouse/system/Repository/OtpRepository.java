@@ -12,7 +12,6 @@ import java.util.UUID;
 
 public interface OtpRepository extends JpaRepository<OtpModel, UUID> {
     Optional<OtpModel> findTopByOtpAndUsedFalseOrderByCreatedAtDesc(String otp);
-    Optional<OtpModel> findTopByEmailOrderByCreatedAtDesc(String userEmail);
     @Modifying
     @Transactional
     @Query("DELETE FROM OtpModel o WHERE o.expiresAt < :now")

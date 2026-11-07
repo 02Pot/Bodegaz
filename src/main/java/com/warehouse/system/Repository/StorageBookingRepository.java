@@ -9,7 +9,6 @@ import jakarta.persistence.QueryHint;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -21,6 +20,35 @@ public interface StorageBookingRepository extends JpaRepository<StorageBooking, 
     @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000"))
     @Query("select b from StorageBooking b where b.orderId = :id")
     Optional<StorageBooking> findByIdForUpdate(@Param("id") UUID id);
+
+    @Query("""
+    select b from StorageBooking b
+    join fetch b.user
+    join fetch b.storage s
+    join fetch s.warehouse w
+    where w.user.id = :ownerId
+      and b.status not in :hidden
+    order by b.startDate desc
+    """)
+    List<StorageBooking> findByOwner(@Param("ownerId") UUID ownerId,
+                                     @Param("hidden") Collection<BookingStatus> hidden);
+
+    @Query("""
+        SELECT b FROM StorageBooking b
+        JOIN FETCH b.storage s
+        JOIN FETCH s.warehouse w
+        JOIN FETCH w.warehouseAddress
+        WHERE b.user.id = :userId
+    """)
+    List<StorageBooking> findByUser_IdWithDetails(UUID userId);
+
+    @Query("""
+        select b from StorageBooking b
+        JOIN FETCH b.user
+        WHERE b.storage.storageId = :storageId
+        ORDER by b.startDate desc
+        """)
+    List<StorageBooking> findAllByStorageId(@Param("storageId") UUID storageId);
 
     @Query("select new com.warehouse.system.DTO.Response.StorageUsage(" +
             "coalesce(sum(b.rentedVolumeCubicMeter), 0.0), " +

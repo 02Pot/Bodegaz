@@ -10,13 +10,4 @@ import java.util.UUID;
 
 public interface UserModelRepository extends JpaRepository<UserModel, UUID> {
     Optional<UserModel> findByEmail(String email);
-    boolean existsByEmail(String email);
-    Page<UserModel> findByNameContainingIgnoreCase(
-            String name,
-            Pageable pageable
-    );
-    Page<UserModel> findByEmailContainingIgnoreCase(
-            String email,
-            Pageable pageable
-    );
 }

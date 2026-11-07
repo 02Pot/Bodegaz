@@ -10,11 +10,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
-    Optional<Invoice> findByInvoiceNumber(String number);
     Slice<Invoice> findByInvoiceIdGreaterThanOrderByInvoiceIdAsc(UUID id, Pageable pageable);
-    boolean existsByInvoiceNumber(String invoiceNumber);
     boolean existsByLeaseAgreementLeaseId(UUID id);
-    boolean existsByInvoiceNumberAndInvoiceIdNot(String invoiceNumber, UUID invoiceId);
     boolean existsByLeaseAgreementLeaseIdAndInvoiceIdNot(UUID leaseId, UUID invoiceId);
     Page<Invoice> findByInvoiceStatus(InvoiceStatus status, Pageable pageable);
 }

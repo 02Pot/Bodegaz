@@ -2,29 +2,25 @@ package com.warehouse.system.Controller;
 
 import com.warehouse.system.DTO.Request.WarehouseRequest;
 import com.warehouse.system.DTO.Request.WarehouseUpdateRequest;
-import com.warehouse.system.DTO.Response.BookingResponse;
 import com.warehouse.system.DTO.Response.ScrollResponse;
 import com.warehouse.system.DTO.Response.SellerWarehouseResponse;
 import com.warehouse.system.DTO.Response.WarehouseResponse;
-import com.warehouse.system.Model.StorageBooking;
+import com.warehouse.system.Model.UserModel;
 import com.warehouse.system.Model.WarehouseImage;
 import com.warehouse.system.Service.File.FileStorageService;
 import com.warehouse.system.Service.Warehouse.WarehouseService;
-import com.warehouse.system.Utils.GetCurrentUserId;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.http.*;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.print.attribute.standard.Media;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,38 +31,37 @@ public class WarehouseController {
 
     private final WarehouseService warehouseService;
     private final Clock clock;
-    private final GetCurrentUserId getCurrentUserId;
     private final FileStorageService storageService;
 
     @GetMapping("/all")
     public ResponseEntity<ScrollResponse<WarehouseResponse>> getAll(
             @RequestParam(required = false)UUID cursor,
             @RequestParam(defaultValue = "10") int size,
-            Authentication auth
+            @AuthenticationPrincipal UserModel user
     ){
-        return ResponseEntity.ok(warehouseService.getAllWarehouse(cursor,size,getCurrentUserId.currentUserId(auth)));
+        return ResponseEntity.ok(warehouseService.getAllWarehouse(cursor,size,user.getId()));
     }
 
     @GetMapping("/{warehouseId}")
     public ResponseEntity<WarehouseResponse> getById(
             @PathVariable UUID warehouseId,
-            Authentication auth
+            @AuthenticationPrincipal UserModel user
     ){
-        return ResponseEntity.ok(warehouseService.getByWarehouseId(getCurrentUserId.currentUserId(auth),warehouseId));
+        return ResponseEntity.ok(warehouseService.getByWarehouseId(user.getId(),warehouseId));
     }
 
-    @GetMapping("/my-rental")
-    public ResponseEntity<List<SellerWarehouseResponse>> getMyWarehouse(Authentication authentication){
-        return ResponseEntity.ok(warehouseService.getMyWarehouse(getCurrentUserId.currentUserId(authentication)));
+    @GetMapping("/me")
+    public ResponseEntity<List<SellerWarehouseResponse>> getMyWarehouse(@AuthenticationPrincipal UserModel user){
+        return ResponseEntity.ok(warehouseService.getMyWarehouse(user.getId()));
     }
 
     @PostMapping(value = "/add",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<WarehouseResponse> addWarehouse(
             @RequestPart("data") @Valid WarehouseRequest request,
             @RequestPart(value = "images",required = false) List<MultipartFile> images,
-            Authentication auth
+            @AuthenticationPrincipal UserModel user
     ) throws IOException {
-        return ResponseEntity.ok(warehouseService.addWarehouse(request,images,getCurrentUserId.currentUserId(auth)));
+        return ResponseEntity.ok(warehouseService.addWarehouse(request,images,user.getId()));
     }
 
     @PatchMapping(value = "/{warehouseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -75,42 +70,38 @@ public class WarehouseController {
             @RequestPart(value = "data",required = false) WarehouseUpdateRequest request,
             @RequestPart(value = "files", required = false) List<MultipartFile> images,
             @RequestParam(value = "removeImageIds", required = false) List<UUID> removeImageIds,
-            Authentication auth
+            @AuthenticationPrincipal UserModel user
     ) throws IOException {
         return ResponseEntity.ok(warehouseService.updateWarehouse(
                 warehouseId,
                 request,
                 images,
                 removeImageIds,
-                getCurrentUserId.currentUserId(auth)));
+                user.getId()));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteWarehouse(
-            Authentication auth,
+            @AuthenticationPrincipal UserModel user,
             @PathVariable UUID id
     ){
-        return ResponseEntity.ok(warehouseService.delete(getCurrentUserId.currentUserId(auth),id));
+        return ResponseEntity.ok(warehouseService.delete(user.getId(),id));
     }
 
     @GetMapping("/trending")
     public ResponseEntity<Page<WarehouseResponse>> getTrendingWarehouse(
-            Authentication auth,
+            @AuthenticationPrincipal UserModel user,
             @RequestParam int size
     ){
-        return ResponseEntity.ok(warehouseService.getByTrending(getCurrentUserId.currentUserId(auth),size));
+        return ResponseEntity.ok(warehouseService.getByTrending(user.getId(),size));
     }
 
     @GetMapping("/newest")
     public ResponseEntity<Page<WarehouseResponse>> getNewestWarehouse(
-            Authentication auth,
+            @AuthenticationPrincipal UserModel user,
             @RequestParam int size
     ){
-        return ResponseEntity.ok(warehouseService.getByNewest(getCurrentUserId.currentUserId(auth),size));
-    }
-
-    private BookingResponse toResponse(StorageBooking b) {
-        return BookingResponse.from(b, LocalDateTime.now(clock));
+        return ResponseEntity.ok(warehouseService.getByNewest(user.getId(),size));
     }
 
     //UPLOAD IMAGE

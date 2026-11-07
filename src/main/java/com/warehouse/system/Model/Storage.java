@@ -30,8 +30,8 @@ public class Storage {
     @Column(name = "max_weight",nullable = false)
     private double maxWeight;
 
-    @Column(name = "is_available")
-    private boolean isAvailable;
+    @Column(name = "is_listed")
+    private boolean listed = true;
 
     @Column(name = "price")
     private BigDecimal pricePerCubicMeter;
@@ -42,6 +42,13 @@ public class Storage {
     @Column(name = "material_type", nullable = false)
     @Enumerated(EnumType.STRING)
     private MaterialType materialType;
+
+    @Column(nullable = false)
+    private int unitCounter = 0;
+
+    public int nextUnitNumber() {
+        return ++unitCounter;
+    }
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "warehouse_id",nullable = false)

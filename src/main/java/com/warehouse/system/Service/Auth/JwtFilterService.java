@@ -68,6 +68,7 @@ public class JwtFilterService {
     public String generateRefreshToken(Authentication authentication) {
         Map<String,String> claims = new HashMap<>();
         claims.put("tokenType","refresh");
+        claims.put("jti", UUID.randomUUID().toString());
 
         return generateToken(authentication,refreshExpiration,claims);
     }

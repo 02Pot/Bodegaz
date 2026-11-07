@@ -14,8 +14,6 @@ import java.util.*;
 
 
 public interface WarehouseRepository extends JpaRepository<Warehouse, UUID> {
-    Slice<Warehouse> findByWarehouseIdGreaterThanOrderByWarehouseIdAsc(UUID id, Pageable pageable);
-    List<Warehouse> findAllByUserId(UUID userId);
     @Query("""
     select w from Warehouse w
     join fetch w.warehouseAddress
@@ -56,9 +54,4 @@ public interface WarehouseRepository extends JpaRepository<Warehouse, UUID> {
       order by i.createdAt desc
     """)
     Page<Warehouse> findNewest(Pageable pageable);
-    @Query("""
-    SELECT w FROM Warehouse w 
-    WHERE w.warehouseCapacityKg >= :requiredCapacity
-    """)
-    Page<Warehouse> findByWarehouseCapacityKg(@Param("requiredCapacity") double requiredCapacity, Pageable pageable);
 }

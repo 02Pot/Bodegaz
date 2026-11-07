@@ -2,7 +2,6 @@ package com.warehouse.system.DTO.Response;
 
 import com.warehouse.system.Enums.MaterialType;
 import com.warehouse.system.Model.Storage;
-import com.warehouse.system.Model.Warehouse;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -12,7 +11,7 @@ public record StorageResponse(
         String blockName,
         String section,
         double maxWeight,
-        boolean isAvailable,
+        boolean isListed,
         BigDecimal pricePerCubicMeter,
         double maxVolumeCubicMeter,
         MaterialType materialType,
@@ -25,7 +24,7 @@ public record StorageResponse(
                 s.getBlockName(),
                 s.getSection(),
                 s.getMaxWeight(),
-                s.isAvailable(),
+                s.isListed(),
                 s.getPricePerCubicMeter(),
                 s.getMaxVolumeCubicMeter(),
                 s.getMaterialType(),

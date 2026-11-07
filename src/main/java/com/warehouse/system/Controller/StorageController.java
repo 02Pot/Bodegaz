@@ -3,13 +3,13 @@ package com.warehouse.system.Controller;
 import com.warehouse.system.DTO.Request.StorageRequest;
 import com.warehouse.system.DTO.Request.StorageUpdateRequest;
 import com.warehouse.system.DTO.Response.StorageResponse;
+import com.warehouse.system.Model.UserModel;
 import com.warehouse.system.Service.Warehouse.StorageService;
-import com.warehouse.system.Utils.GetCurrentUserId;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,15 +21,14 @@ import java.util.UUID;
 public class StorageController {
 
     private final StorageService storageService;
-    private final GetCurrentUserId userIdService;
 
     @PostMapping
     public ResponseEntity<List<StorageResponse>> create(
             @PathVariable UUID warehouseId,
             @Valid @RequestBody StorageRequest req,
-            Authentication authentication) {
+            @AuthenticationPrincipal UserModel user) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(storageService.addStorage(req, userIdService.currentUserId(authentication), warehouseId));
+                .body(storageService.addStorage(req,user.getId(), warehouseId));
     }
 
     @GetMapping
@@ -40,8 +39,8 @@ public class StorageController {
     @DeleteMapping("/{storageId}")
     public ResponseEntity<Void> delete(@PathVariable UUID warehouseId,
                                        @PathVariable UUID storageId,
-                                       Authentication authentication) {
-        storageService.deleteStorage(warehouseId, storageId, userIdService.currentUserId(authentication));
+                                       @AuthenticationPrincipal UserModel user) {
+        storageService.deleteStorage(warehouseId, storageId, user.getId());
         return ResponseEntity.noContent().build();
     }
 
@@ -49,11 +48,11 @@ public class StorageController {
     public ResponseEntity<StorageResponse> update(
             @PathVariable UUID storageId,
             @RequestBody @Valid StorageUpdateRequest request,
-            Authentication authentication
+            @AuthenticationPrincipal UserModel user
     ){
         return ResponseEntity.ok(storageService.updateStorage(
                 storageId,request,
-                userIdService.currentUserId(authentication)));
+                user.getId()));
     }
 
 }

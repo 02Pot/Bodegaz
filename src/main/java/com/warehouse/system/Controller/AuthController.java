@@ -13,19 +13,15 @@ import com.warehouse.system.Enums.AuthAction;
 import com.warehouse.system.Exception.RefreshTokenReuseException;
 import com.warehouse.system.Service.Auth.UserService;
 import io.jsonwebtoken.JwtException;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
