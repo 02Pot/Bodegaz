@@ -12,6 +12,6 @@ public class BookingHoldJob {
 
     @Scheduled(fixedDelayString = "${booking.hold-sweep-ms:60000}")
     public void sweep(){
-        service.expireStaleHolds();
+        service.expireStaleRequests();
     }
 }

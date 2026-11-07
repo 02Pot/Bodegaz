@@ -2,6 +2,7 @@ package com.warehouse.system.Utils;
 
 import com.warehouse.system.Model.StorageType;
 import com.warehouse.system.Repository.StorageTypeRepository;
+import com.warehouse.system.Service.Lease.LeaseTemplateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class StorageTypeSeeders implements ApplicationRunner {
 
     private final StorageTypeRepository repo;
+    private final LeaseTemplateService templateService;
 
     @Override
     @Transactional
@@ -22,6 +24,7 @@ public class StorageTypeSeeders implements ApplicationRunner {
         seed("Pallet Rack",   1.2, 1.0, 2.0,  1000);
         seed("Cold Room",     4.0, 3.0, 2.5,  3000);
         seed("Large Bay",     6.0, 4.0, 3.0,  5000);
+        templateService.ensurePlatformDefault();
     }
 
     private void seed(String name, double l, double b, double h, double capacity) {
@@ -35,6 +38,4 @@ public class StorageTypeSeeders implements ApplicationRunner {
         repo.save(t);
     }
 
-    //cubic meter = length x breadth x height
-    //volume is capacityweight
 }
