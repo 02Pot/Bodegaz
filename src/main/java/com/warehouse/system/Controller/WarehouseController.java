@@ -5,6 +5,7 @@ import com.warehouse.system.DTO.Request.WarehouseUpdateRequest;
 import com.warehouse.system.DTO.Response.ScrollResponse;
 import com.warehouse.system.DTO.Response.SellerWarehouseResponse;
 import com.warehouse.system.DTO.Response.WarehouseResponse;
+import com.warehouse.system.DTO.Warehouse.WarehouseFilter;
 import com.warehouse.system.Model.UserModel;
 import com.warehouse.system.Model.WarehouseImage;
 import com.warehouse.system.Service.File.FileStorageService;
@@ -37,9 +38,10 @@ public class WarehouseController {
     public ResponseEntity<ScrollResponse<WarehouseResponse>> getAll(
             @RequestParam(required = false)UUID cursor,
             @RequestParam(defaultValue = "10") int size,
+            WarehouseFilter filter,
             @AuthenticationPrincipal UserModel user
     ){
-        return ResponseEntity.ok(warehouseService.getAllWarehouse(cursor,size,user.getId()));
+        return ResponseEntity.ok(warehouseService.getAllWarehouse(cursor,size,user.getId(),filter));
     }
 
     @GetMapping("/{warehouseId}")

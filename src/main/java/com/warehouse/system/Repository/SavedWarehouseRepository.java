@@ -4,16 +4,13 @@ import com.warehouse.system.Model.SavedWarehouses;
 import com.warehouse.system.Model.Warehouse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
 
 import java.util.UUID;
 
-public interface SavedWarehouseRepository extends JpaRepository<SavedWarehouses,UUID> {
+public interface SavedWarehouseRepository extends JpaRepository<SavedWarehouses,UUID>, JpaSpecificationExecutor<SavedWarehouses> {
     boolean existsByUser_IdAndWarehouse_WarehouseId(UUID userId, UUID warehouseId);
 
     @Query("""

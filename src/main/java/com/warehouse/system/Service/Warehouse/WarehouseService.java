@@ -9,11 +9,13 @@ import com.warehouse.system.DTO.Response.ScrollResponse;
 import com.warehouse.system.DTO.Response.SellerWarehouseResponse;
 import com.warehouse.system.DTO.Response.WarehouseResponse;
 import com.warehouse.system.DTO.StoredUpload;
+import com.warehouse.system.DTO.Warehouse.WarehouseFilter;
 import com.warehouse.system.Enums.BookingStatus;
 import com.warehouse.system.Exception.InvalidCredentials;
 import com.warehouse.system.Model.*;
 import com.warehouse.system.Repository.*;
 import com.warehouse.system.Service.File.FileStorageService;
+import com.warehouse.system.Specs.WarehouseSpecs;
 import com.warehouse.system.Utils.FileUtils;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -56,12 +58,26 @@ public class WarehouseService {
     private String imageBaseUrl;
 
     @Transactional(readOnly = true)
-    public ScrollResponse<WarehouseResponse> getAllWarehouse(UUID cursor, int size, UUID userId) {
+    public ScrollResponse<WarehouseResponse> getAllWarehouse(UUID cursor, int size, UUID userId, WarehouseFilter f) {
+        size = Math.min(Math.max(size, 1), 50);
+        boolean asc = "oldest".equalsIgnoreCase(f.sortOrder());
+        Sort sort = asc ? Sort.by("createdAt", "warehouseId") : Sort.by("createdAt", "warehouseId").descending();
+
+        Warehouse c = cursor == null ? null : warehouseRepository.findById(cursor)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid cursor"));
+
+        int limit = size;
         UUID lastId = cursor != null ? cursor : new UUID(0L, 0L);
+
+        List<Warehouse> rows = warehouseRepository.findBy(
+                WarehouseSpecs.feed(userId, f, c, asc,false),
+                q -> q.sortBy(sort).limit(limit + 1).all());
+
+        boolean hasNext = rows.size() > size;
+        List<Warehouse> warehouses = hasNext ? rows.subList(0, size) : rows;
+
         Slice<Warehouse> slice = warehouseRepository
                 .findUnsavedFeed(lastId, userId, PageRequest.of(0, size));
-
-        List<Warehouse> warehouses = slice.getContent();
 
         Map<UUID, List<WarehouseImage>> imageUrlsByWarehouse = listByWarehouseIds(warehouses.stream().map(Warehouse::getWarehouseId).toList());
 

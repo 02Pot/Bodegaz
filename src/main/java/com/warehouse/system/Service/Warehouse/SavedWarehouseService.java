@@ -3,6 +3,7 @@ package com.warehouse.system.Service.Warehouse;
 
 import com.warehouse.system.DTO.Response.ScrollResponse;
 import com.warehouse.system.DTO.Response.WarehouseResponse;
+import com.warehouse.system.DTO.Warehouse.WarehouseFilter;
 import com.warehouse.system.Model.SavedWarehouses;
 import com.warehouse.system.Model.Warehouse;
 import com.warehouse.system.Model.WarehouseImage;
@@ -10,11 +11,13 @@ import com.warehouse.system.Repository.SavedWarehouseRepository;
 import com.warehouse.system.Repository.UserModelRepository;
 import com.warehouse.system.Repository.WarehouseImageRepository;
 import com.warehouse.system.Repository.WarehouseRepository;
+import com.warehouse.system.Specs.WarehouseSpecs;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,13 +56,27 @@ public class SavedWarehouseService {
     }
 
     @Transactional(readOnly = true)
-    public ScrollResponse<WarehouseResponse> getSaved(UUID userId, UUID cursor, int size) {
+    public ScrollResponse<WarehouseResponse> getSaved(UUID userId, UUID cursor, int size, WarehouseFilter f) {
+        size = Math.min(Math.max(size, 1), 50);
+        boolean asc = "oldest".equalsIgnoreCase(f.sortOrder());
+        Sort sort = asc ? Sort.by("createdAt", "warehouseId") : Sort.by("createdAt", "warehouseId").descending();
+
+        Warehouse c = cursor == null ? null : warehouseRepository.findById(cursor)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid cursor"));
+
+        int limit = size;
         UUID lastId = cursor != null ? cursor : new UUID(0L, 0L);
+
+        List<Warehouse> rows = warehouseRepository.findBy(
+                WarehouseSpecs.feed(userId, f, c, asc,true),
+                q -> q.sortBy(sort).limit(limit + 1).all());
+
+        boolean hasNext = rows.size() > size;
+        List<Warehouse> warehouses = hasNext ? rows.subList(0, size) : rows;
 
         Slice<Warehouse> slice = savedRepository
                 .findSavedByUser(userId,lastId, PageRequest.of(0, size));
 
-        List<Warehouse> warehouses = slice.getContent();
         Map<UUID, List<WarehouseImage>> imageUrlsByWarehouse = listByWarehouseIds(warehouses.stream().map(Warehouse::getWarehouseId).toList());
 
         List<WarehouseResponse> items = warehouses.stream().map(w -> WarehouseResponse.from(
