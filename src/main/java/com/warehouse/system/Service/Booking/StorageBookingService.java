@@ -1,5 +1,6 @@
 package com.warehouse.system.Service.Booking;
 
+import com.warehouse.system.DTO.BookingRental.OwnerBookingStats;
 import com.warehouse.system.DTO.Capacity;
 import com.warehouse.system.DTO.Interface.StorageSummary;
 import com.warehouse.system.DTO.Interface.WarehouseSummary;
@@ -25,6 +26,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.PessimisticLockingFailureException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -175,6 +180,8 @@ public class StorageBookingService {
                     b.getStartDate(),
                     b.getEndDate(),
                     b.getStatus(),
+                    b.getRentedWeightKg(),
+                    b.getRentedVolumeCubicMeter(),
                     new StorageSummary(
                             s.getStorageId(),
                             s.getBlockName(),
@@ -185,6 +192,7 @@ public class StorageBookingService {
                             s.getMaterialType()
                     ),
                     new WarehouseSummary(
+                            w.getWarehouseId(),
                             w.getName(),
                             w.getWarehouseCapacityKg(),
                             AddressResponse.from(w.getWarehouseAddress()),
@@ -252,10 +260,28 @@ public class StorageBookingService {
     }
 
     @Transactional(readOnly = true)
-    public List<OwnerBookingResponse> getBookingsByOwner(UUID ownerId) {
-        return storageBookingRepository.findByOwner(ownerId, HIDDEN_FROM_OWNER).stream()
-                .map(OwnerBookingResponse::from)
-                .toList();
+    public Page<OwnerBookingResponse> getBookingsByOwner(UUID ownerId, int page, int size, String search, BookingStatus status) {
+        String like = (search == null || search.isBlank()) ? "%" : "%" + search.trim().toLowerCase() + "%";
+        Pageable pr = PageRequest.of(page, size, Sort.by(Sort.Order.desc("startDate"), Sort.Order.desc("orderId")));
+
+        if (status != null && HIDDEN_FROM_OWNER.contains(status)) return Page.empty(pr);
+
+        Collection<BookingStatus> statuses = status != null
+                ? List.of(status)
+                : EnumSet.complementOf(EnumSet.copyOf(HIDDEN_FROM_OWNER));
+
+        return storageBookingRepository.findOwnerPage(ownerId, statuses, like, pr)
+                .map(OwnerBookingResponse::from);
+    }
+
+    @Transactional(readOnly = true)
+    public OwnerBookingStats getOwnerStats(UUID ownerId) {
+        Collection<BookingStatus> visible = EnumSet.complementOf(EnumSet.copyOf(HIDDEN_FROM_OWNER));
+        LocalDateTime now = LocalDateTime.now();
+        return storageBookingRepository.findOwnerStats(
+                ownerId, visible,
+                BookingStatus.CONFIRMED, BookingStatus.PENDING_OWNER,
+                now, now.plusDays(7));
     }
 
     @Transactional

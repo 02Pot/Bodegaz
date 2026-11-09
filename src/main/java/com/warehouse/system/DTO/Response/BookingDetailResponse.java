@@ -13,6 +13,8 @@ public record BookingDetailResponse(
         LocalDateTime startDate,
         LocalDateTime endDate,
         BookingStatus status,
+        double rentedWeightKg,
+        double rentedVolumeCubicMeter,
         StorageSummary storage,
         WarehouseSummary warehouse
 ) {

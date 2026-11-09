@@ -1,15 +1,18 @@
 package com.warehouse.system.Controller;
 
+import com.warehouse.system.DTO.BookingRental.OwnerBookingStats;
 import com.warehouse.system.DTO.Capacity;
 import com.warehouse.system.DTO.OwnerBookingResponse;
 import com.warehouse.system.DTO.Request.CreateHoldRequest;
 import com.warehouse.system.DTO.Response.BookingDetailResponse;
 import com.warehouse.system.DTO.Response.BookingResponse;
+import com.warehouse.system.Enums.BookingStatus;
 import com.warehouse.system.Model.StorageBooking;
 import com.warehouse.system.Model.UserModel;
 import com.warehouse.system.Service.Booking.StorageBookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -57,8 +60,18 @@ public class BookingController {
     }
 
     @GetMapping("/owner")
-    public List<OwnerBookingResponse> ownerBookings(@AuthenticationPrincipal UserModel user) {
-        return service.getBookingsByOwner(user.getId());
+    public Page<OwnerBookingResponse> ownerBookings(
+            @AuthenticationPrincipal UserModel user,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) BookingStatus status) {
+        return service.getBookingsByOwner(user.getId(), page, Math.min(Math.max(size, 1), 50), search, status);
+    }
+
+    @GetMapping("/owner/stats")
+    public OwnerBookingStats ownerStats(@AuthenticationPrincipal UserModel user) {
+        return service.getOwnerStats(user.getId());
     }
 
     @GetMapping("/my-bookings")

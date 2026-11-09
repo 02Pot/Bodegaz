@@ -2,6 +2,7 @@ package com.warehouse.system.Controller;
 
 import com.warehouse.system.DTO.Response.ScrollResponse;
 import com.warehouse.system.DTO.Response.WarehouseResponse;
+import com.warehouse.system.DTO.Warehouse.WarehouseFilter;
 import com.warehouse.system.Model.UserModel;
 import com.warehouse.system.Service.Warehouse.SavedWarehouseService;
 import lombok.RequiredArgsConstructor;
@@ -33,9 +34,11 @@ public class SavedController {
     }
 
     @GetMapping("/all")
-    public ScrollResponse<WarehouseResponse> getSaved(@AuthenticationPrincipal UserModel user,
-                                                      @RequestParam(required = false) UUID cursor,
-                                                      @RequestParam(defaultValue = "10") int size) {
-        return savedService.getSaved(user.getId(), cursor, size);
+    public ScrollResponse<WarehouseResponse> getSaved(
+            @AuthenticationPrincipal UserModel user,
+            @RequestParam(required = false) UUID cursor,
+            WarehouseFilter filter,
+            @RequestParam(defaultValue = "10") int size) {
+        return savedService.getSaved(user.getId(), cursor, size,filter);
     }
 }
